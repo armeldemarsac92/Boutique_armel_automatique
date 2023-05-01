@@ -3,8 +3,8 @@ import json
 
 
 
-# Read the 'collections.csv' file using pandas
-def read_collections_csv(file_name="collections.csv"):
+# Read the 'item_quantities_per_tags_and_collections.csv' file using pandas
+def read_collections_csv(file_name="item_quantities_per_tags_and_collections.csv"):
     return pd.read_csv(file_name)
 
 # Filter the DataFrame for the specific tags and print the raindrop quantities

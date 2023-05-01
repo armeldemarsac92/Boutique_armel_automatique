@@ -67,12 +67,12 @@ if st.button("Lancer la recherche"):
 
         site = base_url.format(query,parameters1,parameter2,parameters3,parameters4)
 
-        cmd = ['python', 'test4.py', site, str(pieces_a_chercher), str(query)]
+        cmd = ['python', 'scraping_script.py', site, str(pieces_a_chercher), str(query)]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         while process.poll() is None:
-            # Read the progress from the file "progress.txt"
-            with open("progress.txt", "r") as f:
+            # Read the progress from the file "progress_bar_data.txt"
+            with open("Assets/Data/progress_bar_data.txt", "r") as f:
                 progress = float(f.read().strip())
                 normalized_progress = progress / 100
 

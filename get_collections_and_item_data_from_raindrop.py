@@ -121,8 +121,8 @@ if collections:
     df = collections_to_dataframe(collections, tag_counts)
 
     # Save the DataFrame to a CSV file
-    df.to_csv('collections.csv', index=False)
+    df.to_csv('item_quantities_per_tags_and_collections.csv', index=False)
 
-    print("Collections saved to 'collections.csv'")
+    print("Collections saved to 'item_quantities_per_tags_and_collections.csv'")
 else:
     print("Error fetching collections")

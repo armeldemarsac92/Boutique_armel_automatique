@@ -2,7 +2,7 @@ import requests
 import json
 
 # read credentials.json file
-with open('credentials.json') as f:
+with open('Assets/Data/credentials.json') as f:
     cred = json.load(f)
     client_id = cred['client_id']
     client_secret = cred['client_secret']
@@ -24,7 +24,7 @@ response = requests.post(token_url, data={
 })
 access_token = response.json()["access_token"]
 # Save the access token to credentials.json
-with open('credentials.json', 'w') as f:
+with open('Assets/Data/credentials.json', 'w') as f:
     json.dump({"api_key": "Bearer " + access_token,
                "client_secret": client_secret,
                "client_id": client_id}, f)

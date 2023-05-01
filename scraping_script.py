@@ -40,7 +40,7 @@ def open_in_new_tab(link):
     driver.get(link)
 
 #Loads the progress bar to track the progress of 'i'
-progress_file = "progress.txt"
+progress_file = "Assets/Data/progress_bar_data.txt"
 step=0
 
 with open(progress_file, "w") as f:
