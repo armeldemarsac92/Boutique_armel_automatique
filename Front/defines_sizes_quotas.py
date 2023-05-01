@@ -6,12 +6,12 @@ data_file = "../Assets/Data/size_quotas.json"
 
 def save_data(data):
     with open(data_file, "w") as file:
-        json.dump(data, file)
+        json.dump([val / 100 for val in data], file)
 
 def load_data():
     try:
         with open(data_file, "r") as file:
-            return json.load(file)
+            return [val * 100 for val in json.load(file)]
     except FileNotFoundError:
         return []
 
@@ -20,11 +20,11 @@ st.write("Pie chart with 6 adjustable values")
 # Load data from file
 values = load_data()
 
-# Set default values if the data file is empty
-if not values:
-    values = [10, 20, 30, 10, 20, 10]
-
 labels = ["Taille XS", "Taille S", "Taille M", "Taille L", "Taille XL", "Taille XXL"]
+
+# Set default values if the data file is empty or has a different length than labels
+if not values or len(values) != len(labels):
+    values = [10, 20, 30, 10, 20, 10]
 
 # Create a pie chart with the initial values
 fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
@@ -33,10 +33,20 @@ fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
 plotly_chart = st.plotly_chart(fig)
 
 # Get the updated values from the user
-new_values = []
+new_values = values.copy()
 for i in range(len(labels)):
-    new_value = st.slider(f"Adjust value for {labels[i]}", 0, 100, values[i], step=1)
-    new_values.append(new_value)
+    new_value = st.slider(f"Adjust value for {labels[i]}", 0.0, 100.0, float(values[i]), step=0.01)
+
+    if new_value != new_values[i]:
+        diff = new_value - new_values[i]
+        new_values[i] = new_value
+
+        for j in range(len(labels)):
+            if j != i:
+                new_values[j] = max(0, new_values[j] - diff)
+                diff = max(0, -diff)
+                if diff == 0:
+                    break
 
 # Update the pie chart with the new values
 fig.update_traces(values=new_values)
