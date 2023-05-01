@@ -3,7 +3,7 @@ import plotly.graph_objs as go
 import json
 import time
 
-data_file = "Assets/Data/size_quotas.json"
+data_file = "../Assets/Data/size_quotas.json"
 
 def save_data(data):
     with open(data_file, "w") as file:

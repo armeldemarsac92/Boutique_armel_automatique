@@ -3,16 +3,16 @@ import subprocess
 import time
 import json
 
-with open ("Assets/Catalogs/size_catalog.json", "r") as size_catalog:
+with open ("../Assets/Catalogs/size_catalog.json", "r") as size_catalog:
     size_dict=json.load(size_catalog)
 
-with open ("Assets/Catalogs/brand_catalog.json", "r") as brand_catalog:
+with open ("../Assets/Catalogs/brand_catalog.json", "r") as brand_catalog:
     brand_dict=json.load(brand_catalog)
 
-with open ("Assets/Catalogs/category_catalog.json", "r") as category_catalog:
+with open ("../Assets/Catalogs/category_catalog.json", "r") as category_catalog:
     category_dict=json.load(category_catalog)
 
-with open ("Assets/Catalogs/color_catalog.json", "r") as color_catalog:
+with open ("../Assets/Catalogs/color_catalog.json", "r") as color_catalog:
     color_dict=json.load(color_catalog)
 
 # Create an empty placeholder element for the progress bar
@@ -72,7 +72,7 @@ if st.button("Lancer la recherche"):
 
         while process.poll() is None:
             # Read the progress from the file "progress_bar_data.txt"
-            with open("Assets/Data/progress_bar_data.txt", "r") as f:
+            with open("../Assets/Data/progress_bar_data.txt", "r") as f:
                 progress = float(f.read().strip())
                 normalized_progress = progress / 100
 
