@@ -67,7 +67,7 @@ if st.button("Lancer la recherche"):
 
         site = base_url.format(query,parameters1,parameter2,parameters3,parameters4)
 
-        cmd = ['python', 'scraping_script.py', site, str(pieces_a_chercher), str(query)]
+        cmd = ['python', 'vinted_scraping_script.py', site, str(pieces_a_chercher), str(query)]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         while process.poll() is None:
