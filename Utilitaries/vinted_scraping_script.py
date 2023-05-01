@@ -119,12 +119,11 @@ while i < pieces_a_chercher:
                     'query': query,
                 })
 
-                # Update the progress
+                # Update the progress bar by writing to the progress_file.txt
                 i += 1
                 progress = (i / pieces_a_chercher) * 100
                 with open(progress_file, "w") as f:
                     f.write(str(progress))  # Write the progress to the file
-                progress_bar.update(1)  # Update the progress bar
 
 
                 driver.close()  # Close the current tab
