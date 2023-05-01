@@ -1,6 +1,6 @@
 import json
 
-with open ("Assets/Catalogs/size_catalog.json", "r") as data:
+with open ("../Assets/Catalogs/size_catalog.json", "r") as data:
     dictionnaire=json.load(data)
 input = input("votre taille?")
 
