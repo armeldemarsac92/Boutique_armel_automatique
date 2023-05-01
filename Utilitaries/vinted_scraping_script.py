@@ -1,17 +1,12 @@
 import pandas as pd
 import time
 import sys
-from tqdm import tqdm
+import logging
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import TimeoutException
-
-import logging
-logging.getLogger('tensorflow').disabled = True
 
 
 #defines the web browser's options
@@ -19,7 +14,21 @@ chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
 chrome_options.add_argument("--headless") #hides the browser tabs
 chrome_options.add_argument("log-level=2") #hides the headless error messages from the console
+logging.getLogger('tensorflow').disabled = True
 
+# Define the function to open the item link in a new tab
+def open_in_new_tab(link):
+    driver.execute_script("window.open('');")
+    driver.switch_to.window(driver.window_handles[-1])
+    driver.get(link)
+
+#Loads the progress bar to track the progress of 'i'
+progress_file = "../Assets/Data/progress_bar_data.txt"
+i=0
+with open(progress_file, "w") as f:
+    f.write("0")  # Initialize the progress to 0
+
+#gets the search parameters from the parent script
 url = sys.argv[1]
 pieces_a_chercher = int(sys.argv[2])
 query=sys.argv[3]
@@ -33,32 +42,13 @@ wait = WebDriverWait(driver, 10)
 element = wait.until(EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler')))
 element.click()
 
-# Define the function to open the item link in a new tab
-def open_in_new_tab(link):
-    driver.execute_script("window.open('');")
-    driver.switch_to.window(driver.window_handles[-1])
-    driver.get(link)
+# Halts for the page to load
+time.sleep(5)
 
-#Loads the progress bar to track the progress of 'i'
-progress_file = "../Assets/Data/progress_bar_data.txt"
-step=0
-
-with open(progress_file, "w") as f:
-    f.write("0")  # Initialize the progress to 0
-
-
-
-
-# Defines the data list and loads every item's individual link
+# Defines the data list and loads every item's individual link on the Vinted search page
 data = []
 items = driver.find_elements(By.CLASS_NAME, 'web_ui__ItemBox__image-container')
 
-# Halts for the page to load
-time.sleep(5)
-i=0
-
-
-progress_bar = tqdm(total=pieces_a_chercher)  # Initialize the progress bar
 # Starts the scrapping process
 while i < pieces_a_chercher:
 
@@ -128,26 +118,24 @@ while i < pieces_a_chercher:
                     'item_followers': item_followers,
                     'query': query,
                 })
-                i+=1
+
                 # Update the progress
-                step += 1
-                progress = (step / pieces_a_chercher) * 100
+                i += 1
+                progress = (i / pieces_a_chercher) * 100
                 with open(progress_file, "w") as f:
                     f.write(str(progress))  # Write the progress to the file
-
                 progress_bar.update(1)  # Update the progress bar
 
 
                 driver.close()  # Close the current tab
-
                 driver.switch_to.window(driver.window_handles[0])  # Switch back to the main tab
 
             except Exception as e:
 
-                #print(f"Exception encountered: {e}")
+                print(f"First exception encountered: {e}")
                 continue
         except Exception as e:
-                #print(f"Second exception encountered: {e}")
+                print(f"Second exception encountered: {e}")
                 continue
     if 90 < i < pieces_a_chercher:
             driver.close()  # Close the current tab
