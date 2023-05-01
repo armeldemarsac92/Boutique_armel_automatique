@@ -4,7 +4,7 @@ import json
 
 
 # Read the 'item_quantities_per_tags_and_collections.csv' file using pandas
-def read_collections_csv(file_name="item_quantities_per_tags_and_collections.csv"):
+def read_collections_csv(file_name="../Assets/Data/item_quantities_per_tags_and_collections.csv"):
     return pd.read_csv(file_name)
 
 # Filter the DataFrame for the specific tags and print the raindrop quantities
@@ -32,24 +32,26 @@ def main():
     check_tag_quantities(df, tags)
 
 # Filter the DataFrame for the specific tags and store the raindrop quantities in a JSON file
-def store_tag_quantities(df, tags, file_name="tag_quantities.json"):
+def store_tag_quantities(df, tags, file_name="../Assets/Data/item_quantites_per_cat_and_size_summed_up.json"):
     quantities = {}
 
-    for tag in tags:
-        tag_quantities = {}
+    for index, row in df.iterrows():
+        collection_id = row["ID"]
+        collection_title = row["Title"]
+        collection_quantities = {}
 
-        for index, row in df.iterrows():
+        for tag in tags:
             if row[tag] > 0:
-                collection_id = row["ID"]
-                collection_title = row["Title"]
-                tag_quantities[collection_title] = row[tag]
+                collection_quantities[tag] = row[tag]
 
-        quantities[tag] = tag_quantities
+        if collection_quantities:
+            quantities[collection_title] = collection_quantities
 
     with open(file_name, "w") as file:
         json.dump(quantities, file)
 
     print(f"Tag quantities stored in {file_name}")
+
 
 
 

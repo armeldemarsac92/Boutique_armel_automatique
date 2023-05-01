@@ -152,7 +152,7 @@ while i < pieces_a_chercher:
 df = pd.DataFrame(data)
 
 # Save the dataframe as a CSV file
-df.to_csv('item_data.csv', index=False)
+df.to_csv('item_data_scrapped_from_vinted.csv', index=False)
 
 # Close the webdriver
 driver.quit()

@@ -3,7 +3,7 @@ import pandas as pd
 import json
 
 # Load access token from a file
-def load_access_token_from_file(file_name="credentials.json"):
+def load_access_token_from_file(file_name="../Assets/Data/credentials.json"):
     with open(file_name, "r") as file:
         data = json.load(file)
         return data["api_key"]
@@ -121,7 +121,7 @@ if collections:
     df = collections_to_dataframe(collections, tag_counts)
 
     # Save the DataFrame to a CSV file
-    df.to_csv('item_quantities_per_tags_and_collections.csv', index=False)
+    df.to_csv('../Assets/Data/item_quantities_per_tags_and_collections.csv', index=False)
 
     print("Collections saved to 'item_quantities_per_tags_and_collections.csv'")
 else:
