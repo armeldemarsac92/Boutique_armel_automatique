@@ -36,7 +36,7 @@ if st.button("Lancer la recherche"):
         color_ids = [color_dict[color]["id"] for color in selected_colors]
         # Appel de la fonction de scrapping avec les paramètres
 
-        base_url = "https://www.vinted.fr/catalog?{}{}{}{}{}"
+        base_url = "https://www.vinted.fr/catalog?{}{}{}{}"
 
         #https://www.vinted.fr/catalog?catalog[]=266&size_id[]=206&size_id[]=207&size_id[]=208&brand_id[]=12&brand_id[]=14&search_text=pull&color_ids[]=3&color_ids[]=20
 
