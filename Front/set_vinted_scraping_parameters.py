@@ -33,7 +33,7 @@ if st.button("Lancer la recherche"):
         brand_ids = [brand_dict[brand] for brand in selected_brand]
         category_ids = [category_dict[category] for category in selected_category]
         size_ids = [size_dict[size] for size in selected_sizes]
-        color_ids = [colors_dict[color]["id"] for color in selected_colors]
+        color_ids = [color_dict[color]["id"] for color in selected_colors]
         # Appel de la fonction de scrapping avec les paramètres
 
         base_url = "https://www.vinted.fr/catalog?{}{}{}{}{}"
