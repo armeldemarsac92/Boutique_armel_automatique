@@ -18,7 +18,7 @@ def app4():
 
     # Create an empty placeholder element for the collection progress bar
     progress_placeholder_2 = st.empty()
-    st.divider
+    st.divider()
     # Create an empty placeholder element for the size progress bar
     progress_placeholder = st.empty()
 
@@ -108,5 +108,6 @@ def app4():
 
             # Add the category results to the overall results dictionary
             results[category] = category_results
+        st.balloons()
 
 
