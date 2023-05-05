@@ -16,9 +16,9 @@ def app2():
     with open("../Assets/Catalogs/color_catalog.json", "r") as color_catalog:
         color_dict = json.load(color_catalog)
 
-    def save_query_urls_to_json(file_name, data, urls):
+    def save_query_urls_to_json(file_name, data):
         with open(file_name, "w") as file:
-            json.dump({"data": data, "urls": urls}, file)
+            json.dump({"data": data}, file)
 
     # Read the existing query URLs and parameters from the JSON file
     query_urls_file = "../Assets/Data/query_urls.json"
@@ -51,21 +51,11 @@ def app2():
     selected_colors = st.multiselect("Sélectionnez une ou plusieurs couleurs", list(color_dict.keys()), default=default_colors)
     desired_number_of_items = st.number_input("Desired number of items", min_value=0, value=default_desired_number_of_items, step=1)
 
-    if st.button("Save Query Parameters"):
+    if st.button("Sauvegarder les paramètres de recherche"):
         # Create query parameters
         brand_ids = [brand_dict[brand] for brand in selected_brand]
         category_ids = [category_dict[category] for category in selected_category]
         color_ids = [color_dict[color]["id"] for color in selected_colors]
-
-        # Store the query parameters for the selected collection
-        query_urls[selected_collection] = {
-            "query": query,
-            "brand_ids": brand_ids,
-            "category_ids": category_ids,
-            "color_ids": color_ids,
-            "desired_number_of_items": desired_number_of_items,
-        }
-
         # Create the query URL
         base_url = "https://www.vinted.fr/catalog?{}{}{}{}"
         query_str = "search_text={}".format(query)
@@ -74,8 +64,18 @@ def app2():
         brand_ids_str = "".join([f"&brand_id[]={brand_id}" for brand_id in brand_ids])
         site = base_url.format(query_str, color_ids_str, category_ids_str, brand_ids_str)
 
+        # Store the query parameters for the selected collection
+        query_urls[selected_collection] = {
+            "query": query,
+            "brand_ids": brand_ids,
+            "category_ids": category_ids,
+            "color_ids": color_ids,
+            "desired_number_of_items": desired_number_of_items,
+            "url": site
+        }
         # Save the query URLs and parameters to the JSON file
-        save_query_urls_to_json(query_urls_file, query_urls, {selected_collection: site})
+        save_query_urls_to_json(query_urls_file, query_urls)
+
 
         st.success(f"Query parameters and URL saved for the {selected_collection} collection.")
 

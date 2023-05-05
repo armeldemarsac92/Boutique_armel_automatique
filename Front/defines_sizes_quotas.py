@@ -16,6 +16,8 @@ def app3():
         except FileNotFoundError:
             return []
 
+    st.title("Proportion de tailles")
+
     st.write("Pie chart with 6 adjustable values")
 
     # Load data from file
@@ -27,8 +29,10 @@ def app3():
     if not values or len(values) != len(labels):
         values = [10, 20, 30, 10, 20, 10]
 
+    colors = ['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A', '#19D3F3']
+
     # Create a pie chart with the initial values
-    fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values, textinfo='label+percent', sort=False, marker=dict(colors=colors))])
 
     # Display the chart
     plotly_chart = st.plotly_chart(fig)
@@ -39,15 +43,7 @@ def app3():
         new_value = st.slider(f"Adjust value for {labels[i]}", 0.0, 100.0, float(values[i]), step=0.01)
 
         if new_value != new_values[i]:
-            diff = new_value - new_values[i]
             new_values[i] = new_value
-
-            for j in range(len(labels)):
-                if j != i:
-                    new_values[j] = max(0, new_values[j] - diff)
-                    diff = max(0, -diff)
-                    if diff == 0:
-                        break
 
     # Update the pie chart with the new values
     fig.update_traces(values=new_values)

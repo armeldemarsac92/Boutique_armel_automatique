@@ -41,7 +41,7 @@ def store_tag_quantities(df, tags, file_name="../Assets/Data/item_quantites_per_
         collection_quantities = {}
 
         for tag in tags:
-            if row[tag] > 0:
+            if row[tag] >= 0:
                 collection_quantities[tag] = row[tag]
 
         if collection_quantities:

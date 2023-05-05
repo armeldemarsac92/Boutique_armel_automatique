@@ -48,9 +48,12 @@ time.sleep(5)
 # Defines the data list and loads every item's individual link on the Vinted search page
 data = []
 items = driver.find_elements(By.CLASS_NAME, 'web_ui__ItemBox__image-container')
+if len(items)<90:
+    pieces_a_chercher=len(items)
 
 # Starts the scrapping process
 while i < pieces_a_chercher:
+
 
 
     # For every item's link located on the search result page...
@@ -151,8 +154,9 @@ while i < pieces_a_chercher:
 # Create a pandas dataframe to store the item data
 df = pd.DataFrame(data)
 
-# Save the dataframe as a CSV file
-df.to_csv('../Assets/Data/item_data_scrapped_from_vinted.csv', index=False)
+# Append the dataframe to an existing CSV file or create a new file if it doesn't exist
+file_path = '../Assets/Data/item_data_scrapped_from_vinted.csv'
+df.to_csv(file_path, mode='a', header=False, index=False)
 
 # Close the webdriver
 driver.quit()
