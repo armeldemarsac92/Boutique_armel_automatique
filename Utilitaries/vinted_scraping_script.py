@@ -48,7 +48,7 @@ time.sleep(5)
 # Defines the data list and loads every item's individual link on the Vinted search page
 data = []
 items = driver.find_elements(By.CLASS_NAME, 'web_ui__ItemBox__image-container')
-if len(items)<90:
+if len(items)<pieces_a_chercher:
     pieces_a_chercher=len(items)
 
 # Starts the scrapping process

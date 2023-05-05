@@ -5,17 +5,17 @@ def app1():
     import time
     import json
 
-    with open ("../Assets/Catalogs/size_catalog.json", "r") as size_catalog:
+    with open("../Assets/Catalogs/size_catalog.json", "r") as size_catalog:
         size_dict=json.load(size_catalog)
 
-    with open ("../Assets/Catalogs/brand_catalog.json", "r") as brand_catalog:
+    with open("../Assets/Catalogs/brand_catalog.json", "r") as brand_catalog:
         brand_dict=json.load(brand_catalog)
 
-    with open ("../Assets/Catalogs/category_catalog.json", "r") as category_catalog:
+    with open("../Assets/Catalogs/category_catalog.json", "r") as category_catalog:
         category_dict=json.load(category_catalog)
 
-    with open ("../Assets/Catalogs/color_catalog.json", "r") as color_catalog:
-        color_dict=json.load(color_catalog)
+    with open("../Assets/Catalogs/color_catalog.json", "r") as color_catalog:
+        color_dict = json.load(color_catalog)
 
     # Create an empty placeholder element for the progress bar
     progress_placeholder = st.empty()
@@ -65,7 +65,7 @@ def app1():
             for size_id in size_ids:
                 parameter4 = "&size_id[]={}".format(size_id)
                 parameters4.append(parameter4)
-            parameters4="".join(parameters4)
+            parameters4 ="".join(parameters4)
 
             site = base_url.format(query,parameters1,parameter2,parameters3,parameters4)
 

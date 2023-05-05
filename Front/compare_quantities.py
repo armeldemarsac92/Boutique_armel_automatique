@@ -35,9 +35,6 @@ def app4():
     # Initialize a dictionary to store the results
     results = {}
 
-    #initiate i to track the progress of the collection fetching
-    i=0
-
 
     if st.button("lancer le restockage"):
         # Loop through each category in the desired data
@@ -45,12 +42,27 @@ def app4():
             # Initialize a dictionary to store the category results
             category_results = {}
 
+            #initiate i to track the progress of the collection fetching
+            i=0
+
+            #defines the number of sizes to iterate through, used for the progress bar
+            def count_tailles_inferieures(cloth_data, desired_data, size_quotas):
+                tailles_inferieures = 0
+                for size, quantity in cloth_data[category].items():
+                    expected_quantity = int(category_data['desired_number_of_items'] * size_quotas[list(cloth_data[category].keys()).index(size)])
+                    if quantity < expected_quantity:
+                        tailles_inferieures += 1
+
+                return tailles_inferieures
+
+            tailles_inferieures = count_tailles_inferieures(cloth_data, desired_data, size_quotas)
 
             # Loop through each size in the cloth data for this category
             for size, quantity in cloth_data[category].items():
                 # Multiply the desired number of items by the size quota to get the expected quantity
                 expected_quantity = int(category_data['desired_number_of_items'] * size_quotas[list(cloth_data[category].keys()).index(size)])
 
+                print(cloth_data[category])
                 # Compare the effective quantity with the expected quantity
                 if quantity < expected_quantity:
                     category_results[size] = f'UNDERSTOCK ({quantity} < {expected_quantity})'
@@ -86,7 +98,7 @@ def app4():
 
                     #updates the progress of the collection fetching
                     i+=1
-                    normalized_progress_2 = i/len(size_dict)
+                    normalized_progress_2 = i/tailles_inferieures
                     progress_placeholder_2.progress(normalized_progress_2, f"Avancement du restockage pour {category}")
 
                 elif quantity == expected_quantity:
