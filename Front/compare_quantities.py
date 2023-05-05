@@ -83,18 +83,18 @@ def app4():
 
                     # The script_b.py execution has completed
                     status_placeholder.success(f"La recherche des {pieces_a_chercher} {category} en {size} est terminée")
+
+                    #updates the progress of the collection fetching
                     i+=1
                     normalized_progress_2 = i/len(size_dict)
                     progress_placeholder_2.progress(normalized_progress_2, f"Avancement du restockage pour {category}")
 
-                    print(pieces_a_chercher,query,site)
                 elif quantity == expected_quantity:
                     category_results[size] = 'OK'
                 else:
-                    category_results[size] = f'OVERTOCK ({quantity} > {expected_quantity})'
+                    category_results[size] = f'OVERSTOCK ({quantity} > {expected_quantity})'
 
             # Add the category results to the overall results dictionary
             results[category] = category_results
 
-        # Print the results
-        print(json.dumps(results, indent=4))
+

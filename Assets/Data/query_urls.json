@@ -1,1 +1,1 @@
-{"data": {"Veste de travail": {"query": "veste", "brand_ids": [1153], "category_ids": [2538], "color_ids": [9], "desired_number_of_items": 100, "url": "https://www.vinted.fr/catalog?search_text=veste&color_ids[]=9&catalog[]=2538&brand_id[]=1153"}}}
+{"data": {"Veste de travail": {"query": "veste", "brand_ids": [1153], "category_ids": [2538], "color_ids": [9, 4], "desired_number_of_items": 100, "url": "https://www.vinted.fr/catalog?search_text=veste&color_ids[]=9&color_ids[]=4&catalog[]=2538&brand_id[]=1153"}}}
