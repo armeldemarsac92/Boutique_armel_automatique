@@ -91,7 +91,7 @@ def app4():
                             normalized_progress = progress / 100
 
                             # Update the progress bar
-                            progress_placeholder.progress(normalized_progress, f"Avancement du restockage pour la {size}")
+                            progress_placeholder.progress(normalized_progress, f"Avancement du restockage pour la {size} : {progress}%.")
 
                             # Sleep for a short duration to avoid excessive updates
                             time.sleep(0.1)
