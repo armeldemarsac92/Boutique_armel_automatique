@@ -111,6 +111,10 @@ def app4():
 
             # Add the category results to the overall results dictionary
             results[category] = category_results
+
+        # The script_b.py execution has completed
+        status_placeholder = st.empty()
+        status_placeholder_2.success(f"Le restockage est terminé, bien joué !")
         st.balloons()
 
 

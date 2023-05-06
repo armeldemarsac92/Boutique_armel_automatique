@@ -137,7 +137,7 @@ while i < pieces_a_chercher:
                 i += 1
                 progress = (i / pieces_a_chercher) * 100
                 with open(progress_file, "w") as f:
-                    f.write(str(progress))  # Write the progress to the file
+                    f.write(str(round(progress,0)))  # Write the progress to the file
 
 
                 driver.close()  # Close the current tab
