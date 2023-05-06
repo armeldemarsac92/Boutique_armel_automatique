@@ -1,7 +1,9 @@
+import dateutil.utils
 import pandas as pd
 import time
 import sys
 import logging
+from datetime import date
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -31,7 +33,8 @@ with open(progress_file, "w") as f:
 #gets the search parameters from the parent script
 url = sys.argv[1]
 pieces_a_chercher = int(sys.argv[2])
-query=sys.argv[3]
+query = sys.argv[3]
+session_token = sys.argv[4]
 
 #opens the web browser and searches
 driver = webdriver.Chrome(options=chrome_options)
@@ -103,7 +106,7 @@ while i < pieces_a_chercher:
                 try:
                     item_followers = driver.find_element(By.CSS_SELECTOR, "div div div div div div div [data-testid='item-details-interested_count'] div[class='details-list__item-value']").text
                 except NoSuchElementException:
-                    item_followers = "AUCUN MEMBRE INTERESSE"
+                    item_followers = "0 membre intéressé"
 
                 # Appends the list "data" defined before the while loop with the item's data
                 data.append({
@@ -120,6 +123,14 @@ while i < pieces_a_chercher:
                     'item_date_added': item_date_added,
                     'item_followers': item_followers,
                     'query': query,
+                    'session_token': session_token,
+                    'date_scrapped': date.today().strftime("%d/%m/%Y"),
+                    'status': 'pending',
+                    'raindrop_id':'',
+                    'raindrop_last_update':'',
+                    'raindrop_collection':'',
+                    'raindrop_sort':'',
+                    'raindrop_collection_id':''
                 })
 
                 # Update the progress bar by writing to the progress_file.txt

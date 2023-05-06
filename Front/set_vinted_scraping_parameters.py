@@ -4,6 +4,8 @@ def app1():
     import subprocess
     import time
     import json
+    import random
+    session_token = random.randint(0,10000)
 
     with open("../Assets/Catalogs/size_catalog.json", "r") as size_catalog:
         size_dict=json.load(size_catalog)
@@ -69,7 +71,7 @@ def app1():
 
             site = base_url.format(query,parameters1,parameter2,parameters3,parameters4)
 
-            cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query)]
+            cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query), str(session_token)]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             while process.poll() is None:

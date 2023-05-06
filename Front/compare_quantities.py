@@ -1,6 +1,6 @@
 def app4():
     import json
-    import os
+    import random
     import subprocess
     import streamlit as st
     import time
@@ -34,6 +34,8 @@ def app4():
 
     # Initialize a dictionary to store the results
     results = {}
+
+    session_token = random.randint(0,10000)
 
 
     if st.button("lancer le restockage"):
@@ -73,7 +75,7 @@ def app4():
                     site = category_data['url']+"&size_id[]="+str(size_dict[size])
 
                     #defines the parameters to pass to the scraping script
-                    cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query)]
+                    cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query), str(session_token)]
 
                     #displays an informational message
                     status_placeholder.info(f"Lancement de la recherche de {pieces_a_chercher} {category} en {size}...")
