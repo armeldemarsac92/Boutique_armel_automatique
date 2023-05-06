@@ -18,6 +18,7 @@ def app4():
 
     # Create an empty placeholder element for the collection progress bar
     progress_placeholder_2 = st.empty()
+    status_placeholder_2 = st.empty()
     st.divider()
     # Create an empty placeholder element for the size progress bar
     progress_placeholder = st.empty()
@@ -96,12 +97,12 @@ def app4():
                             time.sleep(0.1)
 
                     # The script_b.py execution has completed
-                    status_placeholder.success(f"La recherche des {pieces_a_chercher} {category} en {size} est terminée")
+                    status_placeholder_2.success(f"La recherche des {pieces_a_chercher} {category} en {size} est terminée")
 
                     #updates the progress of the collection fetching
                     i+=1
                     normalized_progress_2 = i/tailles_inferieures
-                    progress_placeholder_2.progress(normalized_progress_2, f"Avancement du restockage pour {category}")
+                    progress_placeholder_2.progress(normalized_progress_2, f"Avancement du restockage pour {category} : {i}/{tailles_inferieures} tailles.")
 
                 elif quantity == expected_quantity:
                     category_results[size] = 'OK'
