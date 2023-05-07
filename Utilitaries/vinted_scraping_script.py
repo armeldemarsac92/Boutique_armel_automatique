@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import sys
 import logging
-from datetime import date
+from datetime import datetime as dt
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -124,7 +124,7 @@ while i < pieces_a_chercher:
                     'item_followers': item_followers,
                     'query': query,
                     'session_token': session_token,
-                    'date_scrapped': date.today().strftime("%d/%m/%Y"),
+                    'date_scrapped': dt.today().strftime("%d/%m/%Y"),
                     'status': 'pending',
                     'raindrop_id':'',
                     'raindrop_last_update':'',
