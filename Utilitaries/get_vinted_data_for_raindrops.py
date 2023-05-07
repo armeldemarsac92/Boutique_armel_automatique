@@ -56,7 +56,7 @@ for item_link in tqdm(items):
         try:
             element_present = EC.presence_of_element_located((By.CSS_SELECTOR, 'main [class="site-wrapper"]'))
             WebDriverWait(driver, timeout).until(element_present)
-        except TimeoutException
+        except TimeoutException:
             print("Timeout occurred while waiting for the element")
 
         try:
@@ -78,7 +78,7 @@ for item_link in tqdm(items):
             # Switch back to the main tab
             driver.switch_to.window(driver.window_handles[0])
 
-            if i/20 == 1:
+            if i/20 is int:
                 # Write the updated DataFrame back to the CSV file
                 existing_df.to_csv(file_path, index=False)
 
@@ -163,7 +163,7 @@ for item_link in tqdm(items):
 
             i += 1
 
-            if i/20 == 1:
+            if i/20 is int:
                 # Write the updated DataFrame back to the CSV file
                 existing_df.to_csv(file_path, index=False)
 
