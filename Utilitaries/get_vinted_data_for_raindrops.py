@@ -20,7 +20,7 @@ logging.getLogger('tensorflow').disabled = True
 driver = webdriver.Chrome(options=chrome_options)
 
 # Load existing CSV file into a DataFrame
-file_path = '../Assets/Data/item_data_scrapped_from_vinted2.csv'
+file_path = '../Assets/Data/item_data_scrapped_from_vinted.csv'
 existing_df = pd.read_csv(file_path)
 print(len(existing_df))
 
@@ -48,7 +48,6 @@ for item_link in tqdm(items):
         driver.execute_script("window.open('');")
         driver.switch_to.window(driver.window_handles[-1])
         driver.get(item_link)
-
 
         if i == 0:
             # Define the wait instance, waits for the cookie accept button to load then clicks on it

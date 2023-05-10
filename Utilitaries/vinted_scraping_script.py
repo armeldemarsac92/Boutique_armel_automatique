@@ -27,6 +27,7 @@ def open_in_new_tab(link):
 #Loads the progress bar to track the progress of 'i'
 progress_file = "../Assets/Data/progress_bar_data.txt"
 i=0
+page=1
 with open(progress_file, "w") as f:
     f.write("0")  # Initialize the progress to 0
 
@@ -48,6 +49,10 @@ element.click()
 # Halts for the page to load
 time.sleep(5)
 
+# Load existing item data from CSV file to a DataFrame
+file_path = '../Assets/Data/item_data_scrapped_from_vinted.csv'
+existing_data = pd.read_csv(file_path)
+
 # Defines the data list and loads every item's individual link on the Vinted search page
 data = []
 items = driver.find_elements(By.CLASS_NAME, 'web_ui__ItemBox__image-container')
@@ -64,10 +69,14 @@ while i < pieces_a_chercher:
 
         # breaks the while loop above if the number of items 'i' meets the specified number of items 'pieces_a_rechercher'
         if i >= pieces_a_chercher:
+            print("{i} pièces ont été collectées, fin du processus.")
             break
         # Open said link in a new tab
         try:
+            # Check if the item is a duplicate
             item_link = item.find_element(By.TAG_NAME, 'a').get_attribute('href')
+            if item_link in existing_data['item_link'].values:
+                continue  # Skip this item if it's a duplicate
             open_in_new_tab(item_link)  # Open the item link in a new tab
 
 
@@ -118,10 +127,10 @@ while i < pieces_a_chercher:
                     'item_price': item_price,
                     'item_description': item_description,
                     'item_size': item_size,
-                    'item_views': item_views,
+                    'item_initial_views': item_views,
                     'item_location': item_location,
                     'item_date_added': item_date_added,
-                    'item_followers': item_followers,
+                    'item_initial_followers': item_followers,
                     'query': query,
                     'session_token': session_token,
                     'date_scrapped': dt.today().strftime("%d/%m/%Y"),
@@ -145,18 +154,24 @@ while i < pieces_a_chercher:
 
             except Exception as e:
 
-                print(f"First exception encountered: {e}")
+                print(f"La collecte des informations sur la page a échoué, message d'erreur: {e}. Lien suivant.")
                 continue
-        except Exception as e:
-                print(f"Second exception encountered: {e}")
-                continue
-    if 90 < i < pieces_a_chercher:
-            driver.close()  # Close the current tab
-            driver.switch_to.window(driver.window_handles[0])  # Switch back to the main tab
 
-            driver.get(url)
-            time.sleep(7)
-            items = driver.find_elements(By.CLASS_NAME, 'web_ui__ItemBox__image-container')
+        except Exception as e:
+            print(
+                f"Le navigateur n'a pas réussi à ouvrir le lien dans un nouvel onglet, message d'erreur: {e}. Lien suivant.")
+            continue
+
+    #the page has been entirely scraped but we need more data...
+    if i < pieces_a_chercher:
+
+        page+=1
+        url=url+f"&page={page}"
+        driver.get(url)
+        time.sleep(7)
+        items = driver.find_elements(By.CLASS_NAME, 'web_ui__ItemBox__image-container')
+        print("Page suivante...")
+
     else:
         break
 
