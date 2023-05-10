@@ -1,5 +1,5 @@
 import subprocess
-
+import sys
 # Add these lines to your script where you want to execute the subprocess calls
 subprocess_list = [
     "../Utilitaries/get_vinted_data_for_raindrops.py",
@@ -11,7 +11,7 @@ subprocess_list = [
 
 for script in subprocess_list:
     print(f"Executing {script}")
-    process = subprocess.Popen(["python", script], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen([sys.executable, script], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
     print(f"{script} completed.")
     print(f"stdout: {stdout}")

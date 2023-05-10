@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 
-def display_item(item):
+def display_item(item, item_index):
     st.write(f"Item title: {item['item_title']}")
     st.write(f"Item price: {item['item_price']}")
 
@@ -28,10 +28,12 @@ def display_item(item):
         dislike_button = st.form_submit_button(f"Dislike {item['item_title']}")
 
         if like_button:
-            item['status'] = 'validated'
+            df.loc[item_index, 'status'] = 'validated'
+            df.to_csv(file_path, index=False)
             return True
         if dislike_button:
-            item['status'] = 'rejected'
+            df.loc[item_index, 'status'] = 'rejected'
+            df.to_csv(file_path, index=False)
             return True
 
     return False
@@ -43,10 +45,7 @@ st.title('Review Items')
 file_path = '../Assets/Data/item_data_scrapped_from_vinted2.csv'
 
 # Load the existing CSV file or create a new DataFrame
-try:
-    df = pd.read_csv(file_path)
-except FileNotFoundError:
-    df = pd.DataFrame(columns=['item_title', 'item_price', 'item_picture', 'status'])
+df = pd.read_csv(file_path)
 
 pending_items = df[df['status'] == 'pending']
 
@@ -54,7 +53,8 @@ if 'current_item_index' not in st.session_state:
     st.session_state.current_item_index = 0
 
 if not pending_items.empty:
-    if display_item(pending_items.iloc[st.session_state.current_item_index]):
+    pending_item_index = pending_items.index[st.session_state.current_item_index]
+    if display_item(pending_items.loc[pending_item_index], pending_item_index):
         st.session_state.current_item_index += 1
         if st.session_state.current_item_index >= len(pending_items):
             st.session_state.current_item_index = 0

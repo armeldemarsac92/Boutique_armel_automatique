@@ -45,9 +45,12 @@ for item_link in tqdm(items):
 
         if i == 0:
             # Define the wait instance, waits for the cookie accept button to load then clicks on it
-            wait = WebDriverWait(driver, 10)
-            element = wait.until(EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler')))
-            element.click()
+            try:
+                wait = WebDriverWait(driver, 3)
+                element = wait.until(EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler')))
+                element.click()
+            except:
+                pass
 
         # Set the maximum amount of time to wait for the page to load (in seconds)
         timeout = 10
