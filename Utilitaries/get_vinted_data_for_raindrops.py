@@ -65,13 +65,15 @@ for item_link in tqdm(items):
 
             if existing_df.at[item_index, 'item_title'] == "":
 
-                # defines the images links to fetch and stores them in the img_links list
-                img_links = []
-                imgs = driver.find_elements(By.CSS_SELECTOR,
-                                            "div div div div div div [class='web_ui__Image__image web_ui__Image__cover web_ui__Image__scaled']")
-                for img in imgs:
-                    img_link = img.find_element(By.TAG_NAME, 'img').get_attribute('src')
-                    img_links.append(img_link)
+                try:
+                    img_links = []
+                    imgs = driver.find_elements(By.CSS_SELECTOR,
+                                                "div div div div div div [class='web_ui__Image__image web_ui__Image__cover web_ui__Image__scaled']")
+                    for img in imgs:
+                        img_link = img.find_element(By.TAG_NAME, 'img').get_attribute('src')
+                        img_links.append(img_link)
+                except Exception as e:
+                    print(f"Erreur dans la collecte des images : {e}")
 
                 item_brand = wait.until(EC.presence_of_element_located(
                     (By.CSS_SELECTOR, "div div div div div div div div[itemprop='brand'] a span"))).text
@@ -118,10 +120,10 @@ for item_link in tqdm(items):
                 existing_df.at[item_index, 'item_price'] = item_price
                 existing_df.at[item_index, 'item_description'] = item_description
                 existing_df.at[item_index, 'item_size'] = item_size
-                existing_df.at[item_index, 'item_initial_views'] = item_views
+                existing_df.at[item_index, 'item_initial_views'] = str(item_views)
                 existing_df.at[item_index, 'item_location'] = item_location
                 existing_df.at[item_index, 'item_date_added'] = item_date_added
-                existing_df.at[item_index, 'item_initial_followers'] = item_followers
+                existing_df.at[item_index, 'item_initial_followers'] = str(item_followers)
 
                 state = "Données produit ajoutées"
                 added_count += 1
@@ -137,8 +139,8 @@ for item_link in tqdm(items):
                 except NoSuchElementException:
                     item_current_followers = "0 membre intéressé"
 
-                existing_df.at[item_index, 'item_current_followers'] = item_current_followers
-                existing_df.at[item_index, 'item_current_views'] = item_current_views
+                existing_df.at[item_index, 'item_current_followers'] = str(item_current_followers)
+                existing_df.at[item_index, 'item_current_views'] = str(item_current_views)
 
                 state = "Vues et likes actualisés"
                 updated_count += 1

@@ -19,11 +19,8 @@ def app1():
     with open("../Assets/Catalogs/color_catalog.json", "r") as color_catalog:
         color_dict = json.load(color_catalog)
 
-    # Create an empty placeholder element for the progress bar
-    progress_placeholder = st.empty()
-
-    # Create an empty placeholder element for the status message
-    status_placeholder = st.empty()
+    with open ("../Assets/Data/item_quantites_per_cat_and_size_summed_up.json", "r") as collection_catalog:
+        collection_dict = json.load(collection_catalog)
 
     query = st.text_input("Quel vêtement cherchez-vous ?")
     selected_brand = st.multiselect("Quelles marque(s)", list(brand_dict.keys()))
@@ -31,13 +28,22 @@ def app1():
     pieces_a_chercher = st.number_input("Combien de pièces souhaitez-vous ?", min_value=1, step=1)
     selected_sizes = st.multiselect("Sélectionnez une ou plusieurs tailles", list(size_dict.keys()))
     selected_colors = st.multiselect("Sélectionnez une ou plusieurs couleurs", list(color_dict.keys()))
+    selected_collection = st.selectbox("Dans quelle catégorie iront les produits ?",list(collection_dict.keys()))
+
+    # Create an empty placeholder element for the progress bar
+    progress_placeholder = st.empty()
+
+    # Create an empty placeholder element for the status message
+    status_placeholder = st.empty()
 
     if st.button("Lancer la recherche"):
+
         if query and pieces_a_chercher and selected_category:
             brand_ids = [brand_dict[brand] for brand in selected_brand]
             category_ids = [category_dict[category] for category in selected_category]
             size_ids = [size_dict[size] for size in selected_sizes]
             color_ids = [color_dict[color]["id"] for color in selected_colors]
+            collection = selected_collection
             # Appel de la fonction de scrapping avec les paramètres
 
             base_url = "https://www.vinted.fr/catalog?{}{}{}{}{}"
@@ -70,9 +76,12 @@ def app1():
             parameters4 ="".join(parameters4)
 
             site = base_url.format(query,parameters1,parameter2,parameters3,parameters4)
-
-            cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query), str(session_token)]
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            try:
+                cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query),
+                       str(session_token), collection]
+                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except Exception as e:
+                print(f"exception:{e}")
 
             while process.poll() is None:
                 # Read the progress from the file "progress_bar_data.txt"
@@ -81,15 +90,23 @@ def app1():
                     normalized_progress = progress / 100
 
                     # Update the progress bar
-                    my_bar = progress_placeholder.progress(normalized_progress)
+                    progress_placeholder.progress(normalized_progress)
 
                     # Sleep for a short duration to avoid excessive updates
-                    time.sleep(0.1)
+                    time.sleep(1)
+
+
 
             # The script_b.py execution has completed
             status_placeholder.success("Script B has finished.")
+            st.balloons
+            stdout, stderr = process.communicate()
+            print(f"stdout: {stdout}")
+            print(f"stderr: {stderr}")
 
             # Trigger a rerun of the script to update the progress bar and clear the status message
             #st.experimental_rerun()
         else:
             st.warning("Veuillez remplir tous les champs.")
+
+

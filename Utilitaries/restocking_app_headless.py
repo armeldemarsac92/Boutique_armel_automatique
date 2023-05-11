@@ -29,7 +29,7 @@ for category, category_data in desired_data['data'].items():
     for size, quantity in cloth_data[category].items():
         # Multiply the desired number of items by the size quota to get the expected quantity
         expected_quantity = int(category_data['desired_number_of_items'] * size_quotas[list(cloth_data[category].keys()).index(size)])
-
+        print(category)
         print(cloth_data[category])
         # Compare the effective quantity with the expected quantity
         if quantity < expected_quantity:
@@ -41,7 +41,7 @@ for category, category_data in desired_data['data'].items():
             site = category_data['url']+"&size_id[]="+str(size_dict[size])
 
             #defines the parameters to pass to the scraping script
-            cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query), str(session_token)]
+            cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query), str(session_token), category]
 
             print("Launching scraping process...")
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

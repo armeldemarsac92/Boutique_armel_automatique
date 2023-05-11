@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException
 
 
 #defines the web browser's options
@@ -16,6 +17,7 @@ chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
 chrome_options.add_argument("--headless") #hides the browser tabs
 chrome_options.add_argument("log-level=2") #hides the headless error messages from the console
+chrome_options.add_argument(("--disable-gpu"))
 logging.getLogger('tensorflow').disabled = True
 
 # Define the function to open the item link in a new tab
@@ -36,21 +38,26 @@ url = sys.argv[1]
 pieces_a_chercher = int(sys.argv[2])
 query = sys.argv[3]
 session_token = sys.argv[4]
+category = sys.argv[5]
 
 #opens the web browser and searches
 driver = webdriver.Chrome(options=chrome_options)
 driver.get(url)
+try:
+    # Define the wait instance, waits for the cookie accept button to load then clicks on it
+    wait = WebDriverWait(driver, 10)
+    element = wait.until(EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler')))
+    element.click()
+except TimeoutException:
+    print("Pas de cookie notice")
+    pass
 
-# Define the wait instance, waits for the cookie accept button to load then clicks on it
-wait = WebDriverWait(driver, 10)
-element = wait.until(EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler')))
-element.click()
 
 # Halts for the page to load
 time.sleep(5)
 
 # Load existing item data from CSV file to a DataFrame
-file_path = '../Assets/Data/item_data_scrapped_from_vinted.csv'
+file_path = '../Assets/Data/test_data.csv'
 existing_data = pd.read_csv(file_path)
 
 # Defines the data list and loads every item's individual link on the Vinted search page
@@ -69,7 +76,7 @@ while i < pieces_a_chercher:
 
         # breaks the while loop above if the number of items 'i' meets the specified number of items 'pieces_a_rechercher'
         if i >= pieces_a_chercher:
-            print("{i} pièces ont été collectées, fin du processus.")
+            print(f"{i} pièces ont été collectées, fin du processus.")
             break
         # Open said link in a new tab
         try:
@@ -82,11 +89,14 @@ while i < pieces_a_chercher:
 
             try:
                 #defines the images links to fetch and stores them in the img_links list
-                img_links =[]
-                imgs = driver.find_elements(By.CSS_SELECTOR, "div div div div div div [class='web_ui__Image__image web_ui__Image__cover web_ui__Image__scaled']")
-                for img in imgs:
-                    img_link = img.find_element(By.TAG_NAME, 'img').get_attribute('src')
-                    img_links.append(img_link)
+                try :
+                    img_links =[]
+                    imgs = driver.find_elements(By.CSS_SELECTOR, "div div div div div div [class='web_ui__Image__image web_ui__Image__cover web_ui__Image__scaled']")
+                    for img in imgs:
+                        img_link = img.find_element(By.TAG_NAME, 'img').get_attribute('src')
+                        img_links.append(img_link)
+                except Exception as e:
+                    print(f"Erreur dans la collecte des images : {e}")
 
                 item_title = driver.find_element(By.CSS_SELECTOR, "div div div div div div div div div div[itemprop='name'] h2").text
 
@@ -127,26 +137,31 @@ while i < pieces_a_chercher:
                     'item_price': item_price,
                     'item_description': item_description,
                     'item_size': item_size,
-                    'item_initial_views': item_views,
+                    'item_initial_views': str(item_views),
                     'item_location': item_location,
                     'item_date_added': item_date_added,
-                    'item_initial_followers': item_followers,
+                    'item_initial_followers': str(item_followers),
                     'query': query,
                     'session_token': session_token,
                     'date_scrapped': dt.today().strftime("%d/%m/%Y"),
                     'status': 'pending',
-                    'raindrop_id':'',
-                    'raindrop_last_update':'',
-                    'raindrop_collection':'',
-                    'raindrop_sort':'',
-                    'raindrop_collection_id':''
+                    'raindrop_id': '',
+                    'raindrop_last_update': '',
+                    'raindrop_collection': category,
+                    'raindrop_sort': '',
+                    'raindrop_collection_id': ''
                 })
 
                 # Update the progress bar by writing to the progress_file.txt
                 i += 1
                 progress = (i / pieces_a_chercher) * 100
-                with open(progress_file, "w") as f:
-                    f.write(str(round(progress,0)))  # Write the progress to the file
+                try:
+                    with open(progress_file, "w") as f:
+                        f.write(str(round(progress)))  # Write the progress to the file
+                        print(progress)
+                except Exception as e:
+                    print(f"La bar de chargement a planté :{e}")
+                    pass
 
 
                 driver.close()  # Close the current tab
@@ -181,7 +196,7 @@ while i < pieces_a_chercher:
 df = pd.DataFrame(data)
 
 # Append the dataframe to an existing CSV file or create a new file if it doesn't exist
-file_path = '../Assets/Data/item_data_scrapped_from_vinted.csv'
+file_path = '../Assets/Data/test_data.csv'
 df.to_csv(file_path, mode='a', header=False, index=False)
 
 # Close the webdriver
