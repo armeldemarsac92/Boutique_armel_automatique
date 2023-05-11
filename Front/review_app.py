@@ -52,17 +52,15 @@ pending_items = df[df['status'] == 'pending']
 if 'current_item_index' not in st.session_state:
     st.session_state.current_item_index = 0
 
-if not pending_items.empty:
-    pending_item_index = pending_items.index[st.session_state.current_item_index]
-    if display_item(pending_items.loc[pending_item_index], pending_item_index):
+pending_item_indexes = pending_items.index.tolist()
+
+if pending_item_indexes:
+    current_item_index = pending_item_indexes[st.session_state.current_item_index]
+    if display_item(pending_items.loc[current_item_index], current_item_index):
         st.session_state.current_item_index += 1
-        if st.session_state.current_item_index >= len(pending_items):
+        if st.session_state.current_item_index >= len(pending_item_indexes):
             st.session_state.current_item_index = 0
 
-        # Check if 5 items have been processed
-        if st.session_state.current_item_index % 5 == 0:
-            # Save the DataFrame to the CSV file
-            df.to_csv(file_path, index=False)
 else:
     st.write("No pending items.")
 
