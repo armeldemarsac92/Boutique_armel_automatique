@@ -4,6 +4,7 @@ def app1():
     import subprocess
     import time
     import json
+    import csv
     import random
     session_token = random.randint(0,10000)
 
@@ -19,8 +20,22 @@ def app1():
     with open("../Assets/Catalogs/color_catalog.json", "r") as color_catalog:
         color_dict = json.load(color_catalog)
 
-    with open ("../Assets/Data/item_quantites_per_cat_and_size_summed_up.json", "r") as collection_catalog:
-        collection_dict = json.load(collection_catalog)
+    # Initialize an empty dictionary to store your data
+    collection_dict = {}
+
+    # Open your CSV file
+    with open('../Assets/Data/item_quantities_per_tags_and_collections.csv', 'r', encoding='utf-8') as f:
+        # Use the csv library to read the file
+        reader = csv.DictReader(f)
+
+        # Loop through each row in the file
+        for row in reader:
+            # Extract the title
+            title = row["Title"]
+            id = row["ID"]
+
+            # Add the new dictionary to the item quantities dictionary
+            collection_dict[title] = id
 
     query = st.text_input("Quel vêtement cherchez-vous ?")
     selected_brand = st.multiselect("Quelles marque(s)", list(brand_dict.keys()))
@@ -37,76 +52,55 @@ def app1():
     status_placeholder = st.empty()
 
     if st.button("Lancer la recherche"):
-
         if query and pieces_a_chercher and selected_category:
             brand_ids = [brand_dict[brand] for brand in selected_brand]
             category_ids = [category_dict[category] for category in selected_category]
             size_ids = [size_dict[size] for size in selected_sizes]
             color_ids = [color_dict[color]["id"] for color in selected_colors]
-            collection = selected_collection
-            # Appel de la fonction de scrapping avec les paramètres
+            collection = collection_dict[selected_collection]
 
             base_url = "https://www.vinted.fr/catalog?{}{}{}{}{}"
 
-            #https://www.vinted.fr/catalog?catalog[]=266&size_id[]=206&size_id[]=207&size_id[]=208&brand_id[]=12&brand_id[]=14&search_text=pull&color_ids[]=3&color_ids[]=20
-
             query = "search_text={}".format(query)
 
-            if color_ids !="":
-                parameters1=[]
-                for color_id in color_ids:
-                    parameter1 = "&color_ids[]={}".format(color_id)
-                    parameters1.append(parameter1)
-                parameters1="".join(parameters1)
+            parameters1 = ""
+            if color_ids:
+                parameters1 = "".join([f"&color_ids[]={color_id}" for color_id in color_ids])
 
+            parameter2 = f"&catalog[]={','.join(map(str, category_ids))}"
 
-            parameter2 ="&catalog[]={}".format(str(category_ids).replace("[","").replace("]",""))
+            parameters3 = ""
+            if brand_ids:
+                parameters3 = "".join([f"&brand_id[]={brand_id}" for brand_id in brand_ids])
 
-            if brand_ids !="":
-                parameters3=[]
-                for brand_id in brand_ids:
-                    parameter3 = "&brand_id[]={}".format(brand_id)
-                    parameters3.append(parameter3)
-                parameters3="".join(parameters3)
+            parameters4 = "".join([f"&size_id[]={size_id}" for size_id in size_ids])
 
-            parameters4 =[]
-            for size_id in size_ids:
-                parameter4 = "&size_id[]={}".format(size_id)
-                parameters4.append(parameter4)
-            parameters4 ="".join(parameters4)
+            site = base_url.format(query, parameters1, parameter2, parameters3, parameters4)
 
-            site = base_url.format(query,parameters1,parameter2,parameters3,parameters4)
             try:
                 cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query),
-                       str(session_token), collection]
+                       str(session_token), str(selected_collection), str(collection)]
                 process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except Exception as e:
-                print(f"exception:{e}")
+                st.error(f"An error occurred while running the script: {str(e)}")
 
             while process.poll() is None:
-                # Read the progress from the file "progress_bar_data.txt"
                 with open("../Assets/Data/progress_bar_data.txt", "r") as f:
                     progress = float(f.read().strip())
                     normalized_progress = progress / 100
-
-                    # Update the progress bar
                     progress_placeholder.progress(normalized_progress)
-
-                    # Sleep for a short duration to avoid excessive updates
                     time.sleep(1)
 
-
-
-            # The script_b.py execution has completed
             status_placeholder.success("Script B has finished.")
-            st.balloons
-            stdout, stderr = process.communicate()
-            print(f"stdout: {stdout}")
-            print(f"stderr: {stderr}")
+            st.balloons()
 
-            # Trigger a rerun of the script to update the progress bar and clear the status message
-            #st.experimental_rerun()
-        else:
-            st.warning("Veuillez remplir tous les champs.")
+            stdout, stderr = process.communicate()
+            if stderr:
+                st.error(f"An error occurred during the subprocess:\n{stderr}")
+            else:
+                st.success(f"Subprocess completed successfully. Output:\n{stdout}")
+
+
+
 
 

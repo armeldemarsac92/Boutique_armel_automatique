@@ -17,7 +17,8 @@ def extract_collections(collections_data, parent_id=None):
             '_id': collection['_id'],
             'title': collection['title'],
             'parent': parent_id,
-            'count': collection['count']
+            'count': collection['count'],
+            'is_child': True if parent_id else False
         })
 
         if "children" in collection:
@@ -66,6 +67,7 @@ def get_raindrops(collection_id, api_key):
     return raindrops
 
 # Calculate tag counts for each collection
+# Calculate tag counts for each collection
 def get_tag_counts(collections, api_key):
     tag_counts = {}
 
@@ -73,14 +75,16 @@ def get_tag_counts(collections, api_key):
         raindrops = get_raindrops(collection["_id"], api_key)
 
         for raindrop in raindrops:
-            for tag in raindrop["tags"]:
-                if tag not in tag_counts:
-                    tag_counts[tag] = {}
-                if collection["_id"] not in tag_counts[tag]:
-                    tag_counts[tag][collection["_id"]] = 0
-                tag_counts[tag][collection["_id"]] += 1
+            if "tags" in raindrop:  # Ensure that the raindrop has tags
+                for tag in raindrop["tags"]:
+                    if tag not in tag_counts:
+                        tag_counts[tag] = {}
+                    if (collection["_id"], collection["title"]) not in tag_counts[tag]:
+                        tag_counts[tag][(collection["_id"], collection["title"])] = 0
+                    tag_counts[tag][(collection["_id"], collection["title"])] += 1
 
     return tag_counts
+
 
 # Convert the collections list and tag counts into a pandas DataFrame
 def collections_to_dataframe(collections, tag_counts):
@@ -103,9 +107,10 @@ def collections_to_dataframe(collections, tag_counts):
 
         # Add tag counts for each tag
         for tag in tag_counts.keys():
-            data[tag].append(tag_counts[tag].get(collection['_id'], 0))
+            data[tag].append(tag_counts[tag].get((collection["_id"], collection["title"]), 0))
 
     return pd.DataFrame(data)
+
 
 # Load the access token
 api_key = load_access_token_from_file()
@@ -124,5 +129,6 @@ if collections:
     df.to_csv('../Assets/Data/item_quantities_per_tags_and_collections.csv', index=False)
 
     print("Collections saved to 'item_quantities_per_tags_and_collections.csv'")
+
 else:
     print("Error fetching collections")

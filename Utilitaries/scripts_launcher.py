@@ -5,7 +5,6 @@ subprocess_list = [
     "../Utilitaries/get_vinted_data_for_raindrops.py",
     "../Utilitaries/delete_sold_items_from_raindrop.py",
     "../Utilitaries/get_collections_and_item_data_from_raindrop.py",
-    "../Utilitaries/sums_up_sizes_available_per_collection.py",
     "../Utilitaries/restocking_app_headless.py"
 ]
 

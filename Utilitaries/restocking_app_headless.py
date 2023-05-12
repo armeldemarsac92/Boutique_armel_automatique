@@ -1,4 +1,5 @@
 import json
+import csv
 import random
 import subprocess
 with open ("../Assets/Catalogs/size_catalog.json", "r") as size_catalog:
@@ -7,11 +8,42 @@ with open ("../Assets/Catalogs/size_catalog.json", "r") as size_catalog:
 #this script performs the restocking of the boutique, it is the headless version of compare_qnatities.py and made to be executed automatically from scripts_launcher.py
 
 # Read and parse the three files
-with open('../Assets/Data/item_quantites_per_cat_and_size_summed_up.json', 'r') as f1, open(
-        '../Assets/Data/query_urls.json', 'r') as f2, open('../Assets/Data/size_quotas.json', 'r') as f3:
-    cloth_data = json.load(f1)
+with open('../Assets/Data/query_urls.json', 'r') as f2, open('../Assets/Data/size_quotas.json', 'r') as f3:
     desired_data = json.load(f2)
     size_quotas = json.load(f3)
+
+
+
+# Define the tags you're interested in
+tags_of_interest = ["Taille XS", "Taille S", "Taille M", "Taille L", "Taille XL", "Taille XXL"]
+
+# Initialize an empty dictionary to store your data
+cloth_data = {}
+
+# Open your CSV file
+with open('../Assets/Data/item_quantities_per_tags_and_collections.csv', 'r', encoding='utf-8') as f:
+    # Use the csv library to read the file
+    reader = csv.DictReader(f)
+
+    # Loop through each row in the file
+    for row in reader:
+        # Extract the title
+        title = row["Title"]
+
+        # Initialize a new dictionary to store the quantities of the tags of interest
+        quantities = {}
+
+        # Loop through the tags of interest
+        for tag in tags_of_interest:
+            # If the tag is in the row, add its quantity to the new dictionary
+            if tag in row:
+                quantities[tag] = int(row[tag])
+
+        # Add the new dictionary to the item quantities dictionary
+        cloth_data[title] = quantities
+
+print(cloth_data)
+
 
 # Initialize a dictionary to store the results
 results = {}

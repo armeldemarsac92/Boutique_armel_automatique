@@ -39,6 +39,7 @@ pieces_a_chercher = int(sys.argv[2])
 query = sys.argv[3]
 session_token = sys.argv[4]
 category = sys.argv[5]
+category_id = sys.argv[6]
 
 #opens the web browser and searches
 driver = webdriver.Chrome(options=chrome_options)
@@ -138,9 +139,11 @@ while i < pieces_a_chercher:
                     'item_description': item_description,
                     'item_size': item_size,
                     'item_initial_views': str(item_views),
+                    'item_current_views': '',
                     'item_location': item_location,
                     'item_date_added': item_date_added,
                     'item_initial_followers': str(item_followers),
+                    'item_current_followers': '',
                     'query': query,
                     'session_token': session_token,
                     'date_scrapped': dt.today().strftime("%d/%m/%Y"),
@@ -149,7 +152,8 @@ while i < pieces_a_chercher:
                     'raindrop_last_update': '',
                     'raindrop_collection': category,
                     'raindrop_sort': '',
-                    'raindrop_collection_id': ''
+                    'raindrop_collection_id': category_id,
+                    'item_date_sold':''
                 })
 
                 # Update the progress bar by writing to the progress_file.txt

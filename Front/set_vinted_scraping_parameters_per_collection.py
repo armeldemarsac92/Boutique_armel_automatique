@@ -1,10 +1,24 @@
 def app2():
     import streamlit as st
     import json
+    import csv
 
-    # Load the collections from the JSON file
-    with open("../Assets/Data/item_quantites_per_cat_and_size_summed_up.json", "r") as collections_file:
-        collections = json.load(collections_file)
+    # Initialize an empty dictionary to store your data
+    collections = {}
+
+    # Open your CSV file
+    with open('../Assets/Data/item_quantities_per_tags_and_collections.csv', 'r', encoding='utf-8') as f:
+        # Use the csv library to read the file
+        reader = csv.DictReader(f)
+
+        # Loop through each row in the file
+        for row in reader:
+            # Extract the title
+            title = row["Title"]
+            id = row["ID"]
+
+            # Add the new dictionary to the item quantities dictionary
+            collections[title] = id
 
     # Load catalogs from the JSON files
     with open("../Assets/Catalogs/brand_catalog.json", "r") as brand_catalog:
