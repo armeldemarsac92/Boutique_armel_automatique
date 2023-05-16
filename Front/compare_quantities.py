@@ -1,6 +1,6 @@
 def app4():
     import json
-    import csv
+    import pandas as pd
     import random
     import subprocess
     import streamlit as st
@@ -28,37 +28,26 @@ def app4():
     # Read and parse the three files
     with open('../Assets/Data/query_urls.json', 'r') as f2, open('../Assets/Data/size_quotas.json', 'r') as f3:
         desired_data = json.load(f2)
+        desired_data = dict(sorted(desired_data['data'].items()))
         size_quotas = json.load(f3)
+
+
 
     # Define the tags you're interested in
     tags_of_interest = ["Taille XS", "Taille S", "Taille M", "Taille L", "Taille XL", "Taille XXL"]
 
-    # Initialize an empty dictionary to store your data
-    cloth_data = {}
+    # Load the data
+    df = pd.read_csv('../Assets/Data/item_quantities_per_tags_and_collections.csv', encoding='utf-8')
 
-    # Open your CSV file
-    with open('../Assets/Data/item_quantities_per_tags_and_collections.csv', 'r', encoding='utf-8') as f:
-        # Use the csv library to read the file
-        reader = csv.DictReader(f)
+    # Filter the dataframe to only include the columns of interest
+    df = df[['ID', 'Title', 'Parent_ID'] + tags_of_interest]
 
-        # Loop through each row in the file
-        for row in reader:
-            # Extract the title
-            title = row["Title"]
+    # Set 'title' and 'id' as the index
+    df.set_index(['Title', 'ID'], inplace=True)
 
-            # Initialize a new dictionary to store the quantities of the tags of interest
-            quantities = {}
-
-            # Loop through the tags of interest
-            for tag in tags_of_interest:
-                # If the tag is in the row, add its quantity to the new dictionary
-                if tag in row:
-                    quantities[tag] = int(row[tag])
-
-            # Add the new dictionary to the item quantities dictionary
-            cloth_data[title] = quantities
-
-    print(cloth_data)
+    # Convert the dataframe to a dictionary
+    cloth_data = df.to_dict('index')
+    cloth_data = dict(sorted(cloth_data.items()))
 
     # Initialize a dictionary to store the results
     results = {}
@@ -103,7 +92,7 @@ def app4():
                     site = category_data['url']+"&size_id[]="+str(size_dict[size])
 
                     #defines the parameters to pass to the scraping script
-                    cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query), str(session_token)]
+                    cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query), str(session_token), str(site), str(id)]
 
                     #displays an informational message
                     status_placeholder.info(f"Lancement de la recherche de {pieces_a_chercher} {category} en {size}...")

@@ -1,4 +1,6 @@
 import csv
+import time
+
 import requests
 
 API_URL = 'https://api.raindrop.io/rest/v1/raindrop'
@@ -100,7 +102,6 @@ keywords_tags = {
     #other keywords
     'rayé': 'Rayures',
     'texturé': 'Texturé',
-    'uni': 'Uni,',
     'velour': 'Mat',
     'daim': 'Mat',
     'vellusto': 'Mat',
@@ -108,7 +109,9 @@ keywords_tags = {
     'cotelé':'Texturé',
     'a coste':'Texturé',
     'a coste':'Texturé',
-    'righe':'Rayé'
+    'righe':'Rayé',
+    'rayures': 'Rayures',
+    'carreaux': 'Carreaux'
 }
 
 
@@ -131,14 +134,14 @@ with open('../Assets/Data/test_data.csv', 'r', encoding='utf-8') as f:
 
     for row in reader:
 
-        if i >= 10 :
+        if i >= 1000 :
             break
         # Only process rows with status 'validated'
         if row['status'] == 'pending':
             # Prepare tags for the API request
-            colors = [color.strip() for color in row['item_color'].split(',')]
+            colors = [color.strip().lower() for color in row['item_color'].split(',')]
             size = "Taille " + row['item_size'].split('\n')[0]  # Format size to 'Taille X'
-            tags = [row['item_brand'], size] + colors
+            tags = [row['item_brand'].lower(), size] + colors
 
             # Check if color, size, or brand tags exist, if not create new ones
             for tag in tags:
@@ -159,6 +162,10 @@ with open('../Assets/Data/test_data.csv', 'r', encoding='utf-8') as f:
             for keyword, tag in keywords_tags.items():
                 if keyword in row['item_description']:
                     tags.append(tag)
+            # Check for keywords in title
+            for keyword, tag in keywords_tags.items():
+                if keyword in row['item_title']:
+                    tags.append(tag)
 
             #Check for the color tone
             if any(color in row['item_color'] for color in light_colors):
@@ -167,12 +174,14 @@ with open('../Assets/Data/test_data.csv', 'r', encoding='utf-8') as f:
                 tags.append('Sombre ⬛️')
             if any(color in row['item_color'] for color in multicolor):
                 tags.append('Multicolore')
-            if len(['item_color']) == 1:
+            if len(['item_color']) == 1 and not 'multicolore':
                 tags.append('Uni')
-            if 'Rayures' in tags is False:
-                tags.append(('Uni'))
-            if 'Rayures' in tags is True:
-                tags.append(('Motifs'))
+            if len(['item_color'])>1:
+                tags.append('Motifs')
+            if 'Rayures' in tags :
+                tags.append('Motifs')
+            if 'Carreaux' in tags :
+                tags.append('Motifs')
             if 'jean' in row['item_description']:
                 tags.append('Denim')
                 tags.remove('Formel')
@@ -218,7 +227,7 @@ with open('../Assets/Data/test_data.csv', 'r', encoding='utf-8') as f:
                 except ValueError:
                     print("JSON decoding failed. Raw response content:")
                     print(response.content)
-
+                    time.sleep(0.5)
             else:
                 print(f"Request failed with status code {response.status_code}. Raw response content:")
                 print(response.content)

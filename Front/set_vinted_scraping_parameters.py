@@ -52,7 +52,7 @@ def app1():
     status_placeholder = st.empty()
 
     if st.button("Lancer la recherche"):
-        if query and pieces_a_chercher and selected_category:
+        if pieces_a_chercher and selected_category:
             brand_ids = [brand_dict[brand] for brand in selected_brand]
             category_ids = [category_dict[category] for category in selected_category]
             size_ids = [size_dict[size] for size in selected_sizes]
