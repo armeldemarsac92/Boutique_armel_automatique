@@ -1,7 +1,11 @@
 import csv
 import time
-
+import json
 import requests
+
+#with open("../Assets/Data/credentials.json") as f:
+    #data = json.load(f)
+
 
 API_URL = 'https://api.raindrop.io/rest/v1/raindrop'
 API_TOKEN = '06c08b65-8b7a-46f6-b5ce-f8daa8659e34'

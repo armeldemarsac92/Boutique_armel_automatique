@@ -22,6 +22,7 @@ response = requests.post(token_url, data={
     "redirect_uri": redirect_uri,
     "code": authorization_code,
 })
+print(response.json())
 access_token = response.json()["access_token"]
 # Save the access token to credentials.json
 with open('../Assets/Data/credentials.json', 'w') as f:

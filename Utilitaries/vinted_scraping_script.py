@@ -15,7 +15,7 @@ from selenium.common.exceptions import TimeoutException
 #defines the web browser's options
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
-#chrome_options.add_argument("--headless") #hides the browser tabs
+chrome_options.add_argument("--headless") #hides the browser tabs
 chrome_options.add_argument("log-level=2") #hides the headless error messages from the console
 chrome_options.add_argument(("--disable-gpu"))
 logging.getLogger('tensorflow').disabled = True
@@ -202,7 +202,7 @@ while i < pieces_a_chercher:
 df = pd.DataFrame(data)
 
 # Append the dataframe to an existing CSV file or create a new file if it doesn't exist
-file_path = '../Assets/Data/test_data.csv'
+file_path = '../Assets/Data/item_data_scrapped_from_vinted.csv'
 df.to_csv(file_path, mode='a', header=False, index=False)
 
 # Close the webdriver
