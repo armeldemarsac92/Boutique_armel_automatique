@@ -1,1 +1,0 @@
-print(f"Mise à jour des données effectuée : {sold_count} article(s) vendu(s), {updated_count} article(s) mis à jour, {adde

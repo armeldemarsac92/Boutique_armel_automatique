@@ -15,7 +15,7 @@ from selenium.common.exceptions import TimeoutException
 #defines the web browser's options
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
-chrome_options.add_argument("--headless") #hides the browser tabs
+#chrome_options.add_argument("--headless") #hides the browser tabs
 chrome_options.add_argument("log-level=2") #hides the headless error messages from the console
 chrome_options.add_argument(("--disable-gpu"))
 logging.getLogger('tensorflow').disabled = True
@@ -70,7 +70,9 @@ if len(items)<pieces_a_chercher:
 # Starts the scrapping process
 while i < pieces_a_chercher:
 
-
+    if len((items)) == 0 :
+        print("Plus d'article disponible.")
+        break
 
     # For every item's link located on the search result page...
     for item in items:

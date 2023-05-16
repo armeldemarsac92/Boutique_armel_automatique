@@ -92,7 +92,13 @@ def collections_to_dataframe(collections, tag_counts):
         'ID': [],
         'Title': [],
         'Parent_ID': [],
-        'Count': []
+        'Count': [],
+        "query": "",
+        "brand_ids": "",
+        "category_ids": "",
+        "color_ids": "",
+        "desired_number_of_items": "",
+        "url": ""
     }
 
     # Add columns for each tag

@@ -1,24 +1,11 @@
 def app2():
+    import pandas as pd
     import streamlit as st
     import json
     import csv
 
-    # Initialize an empty dictionary to store your data
-    collections = {}
-
-    # Open your CSV file
-    with open('../Assets/Data/item_quantities_per_tags_and_collections.csv', 'r', encoding='utf-8') as f:
-        # Use the csv library to read the file
-        reader = csv.DictReader(f)
-
-        # Loop through each row in the file
-        for row in reader:
-            # Extract the title
-            title = row["Title"]
-            id = row["ID"]
-
-            # Add the new dictionary to the item quantities dictionary
-            collections[title] = id
+    # Load the existing data
+    df = pd.read_csv('../Assets/Data/item_quantities_per_tags_and_collections.csv')
 
     # Load catalogs from the JSON files
     with open("../Assets/Catalogs/brand_catalog.json", "r") as brand_catalog:
@@ -30,40 +17,59 @@ def app2():
     with open("../Assets/Catalogs/color_catalog.json", "r") as color_catalog:
         color_dict = json.load(color_catalog)
 
-    def save_query_urls_to_json(file_name, data):
-        with open(file_name, "w") as file:
-            json.dump({"data": data}, file)
-
-    # Read the existing query URLs and parameters from the JSON file
-    query_urls_file = "../Assets/Data/query_urls.json"
-    try:
-        with open(query_urls_file, "r") as file:
-            data = json.load(file)
-            query_urls = data.get("data", {})
-            query_urls_only = data.get("urls", {})
-    except FileNotFoundError:
-        query_urls = {}
-        query_urls_only = {}
+    # Read the existing query URLs and parameters from the DataFrame
+    query_urls = {}
+    if 'query' in df.columns:
+        for _, row in df.iterrows():
+            collection = row['Title']
+            parameters = {
+                'query': row['query'],
+                'brand_ids': row['brand_ids'],
+                'category_ids': row['category_ids'],
+                'color_ids': row['color_ids'],
+                'desired_number_of_items': row['desired_number_of_items'],
+                'url': row['url']
+            }
+            query_urls[collection] = parameters
 
     # Create a dropdown menu to select a collection
-    selected_collection = st.selectbox("Select a collection", list(collections.keys()))
+    selected_collection = st.selectbox("Select a collection", df['Title'].tolist())
+
+    # Get the current query parameters for the selected collection
+    current_parameters = query_urls.get(selected_collection, {})
 
     # Get the current query parameters for the selected collection
     current_parameters = query_urls.get(selected_collection, {})
 
     # Set the default values for the input widgets based on the current parameters
-    default_query = current_parameters.get("query", "")
-    default_brand = [brand for brand in brand_dict.keys() if brand_dict[brand] in current_parameters.get("brand_ids", [])]
-    default_category = [category for category in category_dict.keys() if category_dict[category] in current_parameters.get("category_ids", [])]
-    default_colors = [color for color in color_dict.keys() if color_dict[color]["id"] in current_parameters.get("color_ids", [])]
-    default_desired_number_of_items = current_parameters.get("desired_number_of_items", 0)
+    try:
+        default_query = current_parameters.get("query", " ")
+        default_brand = [brand for brand, brand_id in brand_dict.items() if
+                         str(brand_id) in current_parameters.get("brand_ids", [])]
+        default_category = [category for category, category_id in category_dict.items() if
+                            str(category_id) in current_parameters.get("category_ids", [])]
+        default_colors = [color for color, color_dict_item in color_dict.items() if
+                          str(color_dict_item["id"]) in current_parameters.get("color_ids", [])]
+        default_desired_number_of_items = current_parameters.get("desired_number_of_items", 0)
+    except:
+        default_query = ""
+        default_brand = []
+        default_category = []
+        default_colors = []
+        default_desired_number_of_items = 0
 
     # Create input widgets for query parameters
     query = st.text_input("Quel vêtement cherchez-vous ?", value=default_query)
     selected_brand = st.multiselect("Quelles marque(s)", list(brand_dict.keys()), default=default_brand)
-    selected_category = st.multiselect("Quelle catégorie (une seule)", list(category_dict.keys()), default=default_category)
-    selected_colors = st.multiselect("Sélectionnez une ou plusieurs couleurs", list(color_dict.keys()), default=default_colors)
-    desired_number_of_items = st.number_input("Desired number of items", min_value=0, value=default_desired_number_of_items, step=1)
+    selected_category = st.multiselect("Quelle catégorie (une seule)", list(category_dict.keys()),
+                                       default=default_category)
+    selected_colors = st.multiselect("Sélectionnez une ou plusieurs couleurs", list(color_dict.keys()),
+                                     default=default_colors)
+    desired_number_of_items = st.number_input("Desired number of items", min_value=0,
+                                              value=int(default_desired_number_of_items), step=1)
+
+    # ...
+    # ...
 
     if st.button("Sauvegarder les paramètres de recherche"):
         # Create query parameters
@@ -71,12 +77,11 @@ def app2():
         category_ids = [category_dict[category] for category in selected_category]
         color_ids = [color_dict[color]["id"] for color in selected_colors]
         # Create the query URL
-        base_url = "https://www.vinted.fr/catalog?{}{}{}{}"
+        base_url = "https://www.vinted.fr/catalog?{}{}{}"
         query_str = "search_text={}".format(query)
         color_ids_str = "".join([f"&color_ids[]={color_id}" for color_id in color_ids])
         category_ids_str = f"&catalog[]={','.join(map(str, category_ids))}"
-        brand_ids_str = "".join([f"&brand_id[]={brand_id}" for brand_id in brand_ids])
-        site = base_url.format(query_str, color_ids_str, category_ids_str, brand_ids_str)
+        site = base_url.format(query_str, color_ids_str, category_ids_str)
 
         # Store the query parameters for the selected collection
         query_urls[selected_collection] = {
@@ -87,18 +92,24 @@ def app2():
             "desired_number_of_items": desired_number_of_items,
             "url": site
         }
-        # Save the query URLs and parameters to the JSON file
-        save_query_urls_to_json(query_urls_file, query_urls)
 
+        # Update the dataframe
+        df.loc[df['Title'] == selected_collection, 'query'] = query
+        df.loc[df['Title'] == selected_collection, 'brand_ids'] = str(brand_ids)
+        df.loc[df['Title'] == selected_collection, 'category_ids'] = str(category_ids)
+        df.loc[df['Title'] == selected_collection, 'color_ids'] = str(color_ids)
+        df.loc[df['Title'] == selected_collection, 'desired_number_of_items'] = desired_number_of_items
+        df.loc[df['Title'] == selected_collection, 'url'] = site
+
+        # Save the updated dataframe back to the CSV file
+        df.to_csv('../Assets/Data/item_quantities_per_tags_and_collections.csv', index=False)
 
         st.success(f"Query parameters and URL saved for the {selected_collection} collection.")
 
-    # Show the current query URL for the selected collection
-    if selected_collection in query_urls_only:
-        site = query_urls_only[selected_collection]
+    if selected_collection in query_urls:
+        site = query_urls[selected_collection].get('url', '')
         st.write(f"Query URL for {selected_collection}:")
         st.write(site)
-
         # Show the desired number of items for the selected collection
         desired_items = query_urls[selected_collection].get("desired_number_of_items", 0)
         st.write(f"Desired number of items for {selected_collection}: {desired_items}")
