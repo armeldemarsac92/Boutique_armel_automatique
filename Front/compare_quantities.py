@@ -1,19 +1,22 @@
 def app4():
     import json
-    import pandas as pd
     import random
+    import ast
     import subprocess
     import streamlit as st
     import time
-    with open ("../Assets/Catalogs/size_catalog.json", "r") as size_catalog:
-        size_dict=json.load(size_catalog)
+    import pandas as pd
+
+
+    with open("../Assets/Catalogs/size_catalog.json", "r") as size_catalog:
+        size_dict = json.load(size_catalog)
+
+
+
+    # This script performs the restocking of the boutique, it is the headless version of compare_qnatities.py
+    # and made to be executed automatically from scripts_launcher.py
 
     st.title("Restockage de la boutique")
-
-    #collects and prepares the collection data
-    get_items = ("Python","../Utilitaries/get_collections_and_item_data_from_raindrop.py")
-    subprocess.Popen(get_items, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
 
     # Create an empty placeholder element for the collection progress bar
     progress_placeholder_2 = st.empty()
@@ -26,111 +29,175 @@ def app4():
     status_placeholder = st.empty()
 
     # Read and parse the three files
-    with open('../Assets/Data/query_urls.json', 'r') as f2, open('../Assets/Data/size_quotas.json', 'r') as f3:
-        desired_data = json.load(f2)
-        desired_data = dict(sorted(desired_data['data'].items()))
+    with open('../Assets/Data/size_quotas.json', 'r') as f3:
         size_quotas = json.load(f3)
-
 
 
     # Define the tags you're interested in
     tags_of_interest = ["Taille XS", "Taille S", "Taille M", "Taille L", "Taille XL", "Taille XXL"]
 
-    # Load the data
+    # Read the CSV file into a pandas DataFrame
     df = pd.read_csv('../Assets/Data/item_quantities_per_tags_and_collections.csv', encoding='utf-8')
+    # filter DataFrame to exclude rows where 'desired_number_of_items' is empty
+    df = df[df['desired_number_of_items'].notna()]
 
-    # Filter the dataframe to only include the columns of interest
-    df = df[['ID', 'Title', 'Parent_ID'] + tags_of_interest]
+    # Initialize an empty dictionary to store the item quantities
+    cloth_data = {}
 
-    # Set 'title' and 'id' as the index
-    df.set_index(['Title', 'ID'], inplace=True)
+    # Loop through each row in the DataFrame
+    for _, row in df.iterrows():
+        # Extract the title
+        title = row["Title"]
 
-    # Convert the dataframe to a dictionary
-    cloth_data = df.to_dict('index')
-    cloth_data = dict(sorted(cloth_data.items()))
+        # Initialize a new dictionary to store the quantities of the tags of interest
+        quantities = {}
+
+        # Loop through the tags of interest
+        for tag in tags_of_interest:
+            # If the tag is in the row, add its quantity to the new dictionary
+            if tag in row:
+                quantities[tag] = int(row[tag])
+
+        # Add the new dictionary to the item quantities dictionary
+        cloth_data[title] = quantities
+
+    # Read the existing query URLs and parameters from the DataFrame
+    query_urls = {}
+
+    if 'query' in df.columns:
+        print('abc')
+        for _, row in df.iterrows():
+            collection = row['Title']
+            parameters = {
+                'query': row['query'],
+                'brand_ids': row['brand_ids'],
+                'category_ids': row['category_ids'],
+                'color_ids': row['color_ids'],
+                'desired_number_of_items': row['desired_number_of_items'],
+                'url': row['url'],
+                'ID': row['ID'],
+                'Title': row['Title']
+            }
+            query_urls[collection] = parameters
 
     # Initialize a dictionary to store the results
     results = {}
 
-    session_token = random.randint(0,10000)
-
+    session_token = random.randint(0, 10000)
 
     if st.button("lancer le restockage"):
-        # Loop through each category in the desired data
-        for category, category_data in desired_data['data'].items():
+        # Loop through each category in the query URLs and parameters
+        for category, parameters in query_urls.items():
             # Initialize a dictionary to store the category results
             category_results = {}
 
-            #initiate i to track the progress of the collection fetching
-            i=0
+            # initiate i to track the progress of the collection fetching
+            i = 0
 
-            #defines the number of sizes to iterate through, used for the progress bar
-            def count_tailles_inferieures(cloth_data, desired_data, size_quotas):
+
+            # defines the number of sizes to iterate through, used for the progress bar
+            def count_tailles_inferieures(cloth_data, query_urls, size_quotas):
                 tailles_inferieures = 0
                 for size, quantity in cloth_data[category].items():
-                    expected_quantity = int(category_data['desired_number_of_items'] * size_quotas[list(cloth_data[category].keys()).index(size)])
+                    expected_quantity = int(parameters['desired_number_of_items'] * size_quotas[
+                        list(cloth_data[category].keys()).index(size)])
                     if quantity < expected_quantity:
                         tailles_inferieures += 1
 
                 return tailles_inferieures
 
-            tailles_inferieures = count_tailles_inferieures(cloth_data, desired_data, size_quotas)
+
+            tailles_inferieures = count_tailles_inferieures(cloth_data, query_urls, size_quotas)
+
+            print('a')
 
             # Loop through each size in the cloth data for this category
             for size, quantity in cloth_data[category].items():
-                # Multiply the desired number of items by the size quota to get the expected quantity
-                expected_quantity = int(category_data['desired_number_of_items'] * size_quotas[list(cloth_data[category].keys()).index(size)])
+                print(size)
 
-                print(cloth_data[category])
-                # Compare the effective quantity with the expected quantity
-                if quantity < expected_quantity:
-                    category_results[size] = f'UNDERSTOCK ({quantity} < {expected_quantity})'
+                # Convert brand_ids from string to list
+                brand_ids = ast.literal_eval(parameters['brand_ids'])
+                for brand_id in brand_ids:
 
-                    # Launch the scraping script with the difference as the number of items to fetch
-                    pieces_a_chercher = expected_quantity - quantity
-                    query = category_data['query']
-                    site = category_data['url']+"&size_id[]="+str(size_dict[size])
+                    print(brand_id)
 
-                    #defines the parameters to pass to the scraping script
-                    cmd = ['python', '../Utilitaries/vinted_scraping_script.py', site, str(pieces_a_chercher), str(query), str(session_token), str(site), str(id)]
+                    # Multiply the desired number of items by the size quota to get the expected quantity
+                    expected_quantity = int(parameters['desired_number_of_items'] * size_quotas[list(cloth_data[category].keys()).index(size)])
+                    print(f'we expect {expected_quantity} items.')
+                    # Compare the effective quantity with the expected quantity
+                    if quantity < expected_quantity:
+                        category_results[size] = f'UNDERSTOCK ({quantity} < {expected_quantity})'
 
-                    #displays an informational message
-                    status_placeholder.info(f"Lancement de la recherche de {pieces_a_chercher} {category} en {size}...")
+                        # Launch the scraping script with the difference as the number of items to fetch
+                        pieces_a_chercher = round((expected_quantity - quantity)/len(brand_ids))
+                        print(f'We need to fetch {pieces_a_chercher} for {brand_id} in {size}.')
 
-                    #launches the scrapping process
-                    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        query = parameters['query']
+                        brand_ids_str = f"&brand_id[]={brand_id}"
+                        site = parameters['url'] + "&size_id[]=" + str(size_dict[size]) + "&brand_id[]=" + str(brand_id)
 
-                    while process.poll() is None:
-                        # Read the progress from the file "progress_bar_data.txt"
-                        with open("../Assets/Data/progress_bar_data.txt", "r") as f:
-                            progress = float(f.read().strip())
-                            normalized_progress = progress / 100
+                        print(site)
 
-                            # Update the progress bar
-                            progress_placeholder.progress(normalized_progress, f"Avancement du restockage pour la {size} : {progress}%.")
+                        # Defines the parameters to pass to the scraping script
+                        cmd = [
+                            'python',
+                            '../Utilitaries/vinted_scraping_script.py',
+                            site,
+                            str(pieces_a_chercher),
+                            str(query),
+                            str(session_token),
+                            str(parameters['Title']),
+                            str(parameters['ID']),
+                        ]
 
-                            # Sleep for a short duration to avoid excessive updates
-                            time.sleep(0.1)
+                        print("Launching scraping process...")
+                        print(parameters['ID'])
+                        print(parameters['Title'])
+                        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-                    # The script_b.py execution has completed
-                    status_placeholder_2.success(f"La recherche des {pieces_a_chercher} {category} en {size} est terminée")
+                        # displays an informational message
+                        status_placeholder.info(f"Lancement de la recherche de {pieces_a_chercher} {category} de la marque {brand_id} en {size}...")
 
-                    #updates the progress of the collection fetching
-                    i+=1
-                    normalized_progress_2 = i/tailles_inferieures
-                    progress_placeholder_2.progress(normalized_progress_2, f"Avancement du restockage pour {category} : {i}/{tailles_inferieures} tailles.")
+                        while process.poll() is None:
+                            # Read the progress from the file "progress_bar_data.txt"
+                            with open("../Assets/Data/progress_bar_data.txt", "r") as f:
+                                progress = float(f.read().strip())
+                                normalized_progress = progress / 100
 
-                elif quantity == expected_quantity:
-                    category_results[size] = 'OK'
-                else:
-                    category_results[size] = f'OVERSTOCK ({quantity} > {expected_quantity})'
+                                # Update the progress bar
+                                progress_placeholder.progress(normalized_progress, f"Avancement du restockage pour {brand_id} en {size} : {progress}%.")
 
-            # Add the category results to the overall results dictionary
-            results[category] = category_results
+                                # Sleep for a short duration to avoid excessive updates
+                                time.sleep(0.1)
 
-        # The script_b.py execution has completed
-        status_placeholder = st.empty()
-        status_placeholder_2.success(f"Le restockage est terminé, bien joué !")
-        st.balloons()
+                        # The script_b.py execution has completed
+                        status_placeholder_2.success(
+                            f"La recherche des {pieces_a_chercher} {category} en {size} est terminée")
+
+                        # updates the progress of the collection fetching
+                        i += 1
+                        print(i)
+                        normalized_progress_2 = i / tailles_inferieures
+                        progress_placeholder_2.progress(normalized_progress_2,
+                        f"Avancement du restockage pour {category} : {i}/{tailles_inferieures} tailles.")
+                        stdout, stderr = process.communicate()
+                        print("Scraping process completed.")
+                        print(f"stdout: {stdout}")
+                        print(f"stderr: {stderr}")
+
+                    elif quantity == expected_quantity:
+                        category_results[size] = 'OK'
+                        print(category_results[size])
+                    else:
+                        category_results[size] = f'OVERSTOCK ({quantity} > {expected_quantity})'
+                        print(category_results[size])
+
+                # Add the category results to the overall results dictionary
+                results[category] = category_results
+
+            # The script_b.py execution has completed
+            status_placeholder = st.empty()
+            status_placeholder_2.success(f"Le restockage est terminé, bien joué !")
+            st.balloons()
 
 

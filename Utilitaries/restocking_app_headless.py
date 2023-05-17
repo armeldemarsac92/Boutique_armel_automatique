@@ -19,7 +19,7 @@ with open('../Assets/Data/size_quotas.json', 'r') as f3:
 tags_of_interest = ["Taille XS", "Taille S", "Taille M", "Taille L", "Taille XL", "Taille XXL"]
 
 # Read the CSV file into a pandas DataFrame
-df = pd.read_csv('../Assets/Data/item_quantities_per_tags_and_collections.csv', encoding='utf-8')
+df = pd.read_csv('../Assets/Data/item_quantities_per_tags_and_collections2.csv', encoding='utf-8')
 # filter DataFrame to exclude rows where 'desired_number_of_items' is empty
 df = df[df['desired_number_of_items'].notna()]
 
@@ -75,21 +75,25 @@ for category, parameters in query_urls.items():
 
     # Loop through each size in the cloth data for this category
     for size, quantity in cloth_data[category].items():
-        # Multiply the desired number of items by the size quota to get the expected quantity
-        expected_quantity = int(parameters['desired_number_of_items'] * size_quotas[list(cloth_data[category].keys()).index(size)])
+        print(size)
 
-        # Compare the effective quantity with the expected quantity
-        if quantity < expected_quantity:
-            category_results[size] = f'UNDERSTOCK ({quantity} < {expected_quantity})'
+        # Convert brand_ids from string to list
+        brand_ids = ast.literal_eval(parameters['brand_ids'])
+        for brand_id in brand_ids:
 
-            # Convert brand_ids from string to list
-            brand_ids = ast.literal_eval(parameters['brand_ids'])
-            for brand_id in brand_ids:
-                print(brand_id)
-                print(len(brand_ids))
+            print(brand_id)
+
+            # Multiply the desired number of items by the size quota to get the expected quantity
+            expected_quantity = int(parameters['desired_number_of_items'] * size_quotas[list(cloth_data[category].keys()).index(size)])
+            print(f'we expect {expected_quantity} items.')
+            # Compare the effective quantity with the expected quantity
+            if quantity < expected_quantity:
+                category_results[size] = f'UNDERSTOCK ({quantity} < {expected_quantity})'
 
                 # Launch the scraping script with the difference as the number of items to fetch
                 pieces_a_chercher = round((expected_quantity - quantity)/len(brand_ids))
+                print(f'We need to fetch {pieces_a_chercher} for {brand_id} in {size}.')
+
                 query = parameters['query']
                 brand_ids_str = f"&brand_id[]={brand_id}"
                 site = parameters['url'] + "&size_id[]=" + str(size_dict[size]) + "&brand_id[]=" + str(brand_id)
@@ -104,8 +108,8 @@ for category, parameters in query_urls.items():
                     str(pieces_a_chercher),
                     str(query),
                     str(session_token),
-                    str(parameters['ID']),
                     str(parameters['Title']),
+                    str(parameters['ID']),
                 ]
 
                 print("Launching scraping process...")
@@ -117,10 +121,12 @@ for category, parameters in query_urls.items():
                 print(f"stdout: {stdout}")
                 print(f"stderr: {stderr}")
 
-        elif quantity == expected_quantity:
-            category_results[size] = 'OK'
-        else:
-            category_results[size] = f'OVERSTOCK ({quantity} > {expected_quantity})'
+            elif quantity == expected_quantity:
+                category_results[size] = 'OK'
+                print(category_results[size])
+            else:
+                category_results[size] = f'OVERSTOCK ({quantity} > {expected_quantity})'
+                print(category_results[size])
 
         # Add the category results to the overall results dictionary
         results[category] = category_results

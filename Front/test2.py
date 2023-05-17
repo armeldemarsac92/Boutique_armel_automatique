@@ -1,116 +1,146 @@
+import requests
 import pandas as pd
-import streamlit as st
 import json
-import csv
 
-# Load the existing data
-df = pd.read_csv('../Assets/Data/item_quantities_per_tags_and_collections2.csv')
+df = pd.read_csv("../Assets/Data/item_quantities_per_tags_and_collections2.csv")
 
-# Load catalogs from the JSON files
-with open("../Assets/Catalogs/brand_catalog.json", "r") as brand_catalog:
-    brand_dict = json.load(brand_catalog)
+# Load access token from a file
+def load_access_token_from_file(file_name="../Assets/Data/credentials2.json"):
+    with open(file_name, "r") as file:
+        data = json.load(file)
+        return data["api_key"]
 
-with open("../Assets/Catalogs/category_catalog.json", "r") as category_catalog:
-    category_dict = json.load(category_catalog)
+# Recursive function to extract collections (including child collections)
+def extract_collections(collections_data, parent_id=None):
+    collections = []
 
-with open("../Assets/Catalogs/color_catalog.json", "r") as color_catalog:
-    color_dict = json.load(color_catalog)
+    for collection in collections_data:
+        collections.append({
+            '_id': collection['_id'],
+            'title': collection['title'],
+            'parent': parent_id,
+            'count': collection['count'],
+            'is_child': True if parent_id else False
+        })
+
+        if "children" in collection:
+            collections.extend(extract_collections(collection["children"], collection['_id']))
+
+    return collections
+
+# Fetch collections (including child collections) from Raindrop API
+def get_collections(api_key):
+    url = "https://api.raindrop.io/rest/v1/collections/childrens"
+    headers = {"Authorization": f"{api_key}"}
+
+    response = requests.get(url, headers=headers)
+    data = response.json()
+
+    if response.status_code == 200:
+        collections = extract_collections(data["items"])
+        return collections
+    else:
+        print(f"Error: {data['error']}")
+        return None
+
+# Fetch the raindrops for a given collection
+def get_raindrops(collection_id, api_key):
+    url = f"https://api.raindrop.io/rest/v1/raindrops/{collection_id}"
+    headers = {"Authorization": f"{api_key}"}
+    raindrops = []
+    page = 0
+    per_page = 50
+
+    while True:
+        params = {"page": page, "perpage": per_page}
+        response = requests.get(url, headers=headers, params=params)
+        data = response.json()
+
+        if response.status_code == 200:
+            if not data["items"]:
+                break
+
+            raindrops.extend(data["items"])
+            page += 1
+        else:
+            print(f"Error: {data.get('error', 'Unknown error')}")
+            return []
+
+    return raindrops
+
+# Calculate tag counts for each collection
+# Calculate tag counts for each collection
+def get_tag_counts(collections, api_key):
+    tag_counts = {}
+
+    for collection in collections:
+        raindrops = get_raindrops(collection["_id"], api_key)
+
+        for raindrop in raindrops:
+            if "tags" in raindrop:  # Ensure that the raindrop has tags
+                for tag in raindrop["tags"]:
+                    if tag not in tag_counts:
+                        tag_counts[tag] = {}
+                    if (collection["_id"], collection["title"]) not in tag_counts[tag]:
+                        tag_counts[tag][(collection["_id"], collection["title"])] = 0
+                    tag_counts[tag][(collection["_id"], collection["title"])] += 1
+
+    return tag_counts
 
 
-# Read the existing query URLs and parameters from the DataFrame
-query_urls = {}
-if 'query' in df.columns:
-    for _, row in df.iterrows():
-        collection = row['Title']
-        parameters = {
-            'query': row['query'],
-            'brand_ids': row['brand_ids'],
-            'category_ids': row['category_ids'],
-            'color_ids': row['color_ids'],
-            'desired_number_of_items': row['desired_number_of_items'],
-            'url': row['url']
-        }
-        query_urls[collection] = parameters
-
-
-# Create a dropdown menu to select a collection
-selected_collection = st.selectbox("Select a collection", df['Title'].tolist())
-
-# Get the current query parameters for the selected collection
-current_parameters = query_urls.get(selected_collection, {})
-
-# Get the current query parameters for the selected collection
-current_parameters = query_urls.get(selected_collection, {})
-
-# Set the default values for the input widgets based on the current parameters
-try:
-    default_query = current_parameters.get("query", " ")
-    default_brand = [brand for brand, brand_id in brand_dict.items() if str(brand_id) in current_parameters.get("brand_ids", [])]
-    default_category = [category for category, category_id in category_dict.items() if str(category_id) in current_parameters.get("category_ids", [])]
-    default_colors = [color for color, color_dict_item in color_dict.items() if str(color_dict_item["id"]) in current_parameters.get("color_ids", [])]
-    default_desired_number_of_items = current_parameters.get("desired_number_of_items", 0)
-except:
-    default_query = ""
-    default_brand = []
-    default_category = []
-    default_colors = []
-    default_desired_number_of_items = 0
-
-
-
-# Create input widgets for query parameters
-query = st.text_input("Quel vêtement cherchez-vous ?", value=default_query)
-selected_brand = st.multiselect("Quelles marque(s)", list(brand_dict.keys()), default=default_brand)
-selected_category = st.multiselect("Quelle catégorie (une seule)", list(category_dict.keys()), default=default_category)
-selected_colors = st.multiselect("Sélectionnez une ou plusieurs couleurs", list(color_dict.keys()), default=default_colors)
-desired_number_of_items = st.number_input("Desired number of items", min_value=0, value=int(default_desired_number_of_items), step=1)
-
-# ...
-# ...
-
-if st.button("Sauvegarder les paramètres de recherche"):
-    # Create query parameters
-    brand_ids = [brand_dict[brand] for brand in selected_brand]
-    category_ids = [category_dict[category] for category in selected_category]
-    color_ids = [color_dict[color]["id"] for color in selected_colors]
-    # Create the query URL
-    base_url = "https://www.vinted.fr/catalog?{}{}{}{}"
-    query_str = "search_text={}".format(query)
-    color_ids_str = "".join([f"&color_ids[]={color_id}" for color_id in color_ids])
-    category_ids_str = f"&catalog[]={','.join(map(str, category_ids))}"
-    brand_ids_str = "".join([f"&brand_id[]={brand_id}" for brand_id in brand_ids])
-    site = base_url.format(query_str, color_ids_str, category_ids_str, brand_ids_str)
-
-    # Store the query parameters for the selected collection
-    query_urls[selected_collection] = {
-    "query": query,
-    "brand_ids": brand_ids,
-    "category_ids": category_ids,
-    "color_ids": color_ids,
-    "desired_number_of_items": desired_number_of_items,
-    "url": site
+# Convert the collections list and tag counts into a pandas DataFrame
+def collections_to_dataframe(collections, tag_counts):
+    data = {
+        'ID': [],
+        'Title': [],
+        'Parent_ID': [],
+        'Count': [],
+        "query": "",
+        "brand_ids": "",
+        "category_ids": "",
+        "color_ids": "",
+        "desired_number_of_items": "",
+        "url": ""
     }
 
-    # Update the dataframe
-    df.loc[df['Title'] == selected_collection, 'query'] = query
-    df.loc[df['Title'] == selected_collection, 'brand_ids'] = str(brand_ids)
-    df.loc[df['Title'] == selected_collection, 'category_ids'] = str(category_ids)
-    df.loc[df['Title'] == selected_collection, 'color_ids'] = str(color_ids)
-    df.loc[df['Title'] == selected_collection, 'desired_number_of_items'] = desired_number_of_items
-    df.loc[df['Title'] == selected_collection, 'url'] = site
+    # Add columns for each tag
+    for tag in tag_counts.keys():
+        data[tag] = []
+
+    for collection in collections:
+        data['ID'].append(collection['_id'])
+        data['Title'].append(collection['title'])
+        data['Parent_ID'].append(collection['parent'] if collection['parent'] else '')
+        data['Count'].append(collection['count'])
+
+        # Add tag counts for each tag
+        for tag in tag_counts.keys():
+            data[tag].append(tag_counts[tag].get((collection["_id"], collection["title"]), 0))
+
+    return pd.DataFrame(data)
 
 
-    # Save the updated dataframe back to the CSV file
+# Load the access token
+api_key = load_access_token_from_file()
+
+# Fetch the collections again (you might want to update your collections and tags)
+collections = get_collections(api_key)
+
+if collections:
+    # Get the new tag counts for each collection
+    tag_counts = get_tag_counts(collections, api_key)
+
+    # Update the DataFrame with new tag counts
+    for tag, counts in tag_counts.items():
+        if tag not in df.columns:
+            df[tag] = 0
+        for collection_id, title in counts.keys():
+            df.loc[df['ID'] == collection_id, tag] = counts[(collection_id, title)]
+
+    # Save the updated DataFrame back to the CSV file
     df.to_csv('../Assets/Data/item_quantities_per_tags_and_collections2.csv', index=False)
 
+    print("Collections updated and saved to 'item_quantities_per_tags_and_collections.csv'")
 
-
-    st.success(f"Query parameters and URL saved for the {selected_collection} collection.")
-
-if selected_collection in query_urls:
-    site = query_urls[selected_collection].get('url', '')
-    st.write(f"Query URL for {selected_collection}:")
-    st.write(site)
-    # Show the desired number of items for the selected collection
-    desired_items = query_urls[selected_collection].get("desired_number_of_items", 0)
-    st.write(f"Desired number of items for {selected_collection}: {desired_items}")
+else:
+    print("Error fetching collections")

@@ -133,7 +133,7 @@ data = {
 }
 i=0
 # Read the CSV file
-with open('../Assets/Data/test_data.csv', 'r', encoding='utf-8') as f:
+with open('../Assets/Data/item_data_scrapped_from_vinted2.csv', 'r', encoding='utf-8') as f:
     reader = csv.DictReader(f)
 
     for row in reader:
@@ -141,7 +141,7 @@ with open('../Assets/Data/test_data.csv', 'r', encoding='utf-8') as f:
         if i >= 1000 :
             break
         # Only process rows with status 'validated'
-        if row['status'] == 'pending':
+        if row['status'] == 'validated':
             # Prepare tags for the API request
             colors = [color.strip().lower() for color in row['item_color'].split(',')]
             size = "Taille " + row['item_size'].split('\n')[0]  # Format size to 'Taille X'
@@ -188,10 +188,8 @@ with open('../Assets/Data/test_data.csv', 'r', encoding='utf-8') as f:
                 tags.append('Motifs')
             if 'jean' in row['item_description']:
                 tags.append('Denim')
-                tags.remove('Formel')
             if 'jean' in row['item_title']:
                 tags.append('Denim')
-                tags.remove('Formel')
             if 'Taille XL' in tags:
                 tags.append('King size')
             if 'Taille XXL' in tags:
@@ -204,16 +202,22 @@ with open('../Assets/Data/test_data.csv', 'r', encoding='utf-8') as f:
             price_tag = get_price_tag(price)
             tags.append(price_tag)
 
+            id_float = float(row['raindrop_collection'])
+            id_int = int(id_float)
+            id_str = str(id_int)
+
             # Prepare the data for the API request
             data_for_request = {
-                'collection': {'$id': row['raindrop_collection_id']},
+                'collection': {
+                    '$id': id_str
+                },
                 'title': row['item_title'],
                 'link': row['item_link'],
                 'tags': tags,
                 'description': row['item_description'],
                 'cover': row['item_picture'][0],
-
             }
+            print(data_for_request)
 
             # Make the API request to create a new Raindrop
             response = requests.post(API_URL, headers=headers, json=data_for_request)
@@ -231,13 +235,13 @@ with open('../Assets/Data/test_data.csv', 'r', encoding='utf-8') as f:
                 except ValueError:
                     print("JSON decoding failed. Raw response content:")
                     print(response.content)
-                    time.sleep(0.5)
+                    time.sleep(1)
             else:
                 print(f"Request failed with status code {response.status_code}. Raw response content:")
                 print(response.content)
 
 # Start by reading the CSV file into a list of dictionaries
-with open('../Assets/Data/test_data.csv', 'r', encoding='utf-8') as f:
+with open('../Assets/Data/item_data_scrapped_from_vinted2.csv', 'r', encoding='utf-8') as f:
     reader = csv.DictReader(f)
     rows = list(reader)
 
@@ -247,9 +251,10 @@ for row in rows:
         if row['item_link'] == data['item_link'][i]:
             row['raindrop_id'] = data['raindrop_id'][i]
             row['raindrop_last_update'] = data['raindrop_last_update'][i]
+            row['status'] = 'available'
 
 # Write the list of dictionaries back out to the file
-with open('../Assets/Data/test_data.csv', 'w', newline='', encoding='utf-8') as f:
+with open('../Assets/Data/item_data_scrapped_from_vinted2.csv.csv', 'w', newline='', encoding='utf-8') as f:
     fieldnames = ['item_title', 'item_picture', 'item_link', 'item_brand', 'item_color', 'item_price',
                   'item_description', 'item_size', 'item_initial_views', 'item_current_views', 'item_location',
                   'item_date_added', 'item_initial_followers', 'item_current_followers', 'query', 'session_token',

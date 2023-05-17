@@ -2,6 +2,8 @@ import requests
 import pandas as pd
 import json
 
+df = pd.read_csv("../Assets/Data/item_quantities_per_tags_and_collections.csv")
+
 # Load access token from a file
 def load_access_token_from_file(file_name="../Assets/Data/credentials.json"):
     with open(file_name, "r") as file:
@@ -121,20 +123,24 @@ def collections_to_dataframe(collections, tag_counts):
 # Load the access token
 api_key = load_access_token_from_file()
 
-# Fetch the collections
+# Fetch the collections again (you might want to update your collections and tags)
 collections = get_collections(api_key)
 
 if collections:
-    # Get the tag counts for each collection
+    # Get the new tag counts for each collection
     tag_counts = get_tag_counts(collections, api_key)
 
-    # Convert collections to a DataFrame
-    df = collections_to_dataframe(collections, tag_counts)
+    # Update the DataFrame with new tag counts
+    for tag, counts in tag_counts.items():
+        if tag not in df.columns:
+            df[tag] = 0
+        for collection_id, title in counts.keys():
+            df.loc[df['ID'] == collection_id, tag] = counts[(collection_id, title)]
 
-    # Save the DataFrame to a CSV file
+    # Save the updated DataFrame back to the CSV file
     df.to_csv('../Assets/Data/item_quantities_per_tags_and_collections.csv', index=False)
 
-    print("Collections saved to 'item_quantities_per_tags_and_collections.csv'")
+    print("Collections updated and saved to 'item_quantities_per_tags_and_collections.csv'")
 
 else:
     print("Error fetching collections")
