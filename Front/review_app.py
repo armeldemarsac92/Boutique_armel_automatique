@@ -1,3 +1,10 @@
+import time
+import pandas
+import pandas as pd
+
+df = pd.read_csv('../Assets/Data/item_data_scrapped_from_vinted.csv')
+
+
 def app5():
     import streamlit as st
     import pandas as pd
@@ -33,17 +40,20 @@ def app5():
 
             if like_button:
                 df.loc[item_index, 'status'] = 'validated'
-                df.to_csv(file_path, index=False)
+                df.to_csv('../Assets/Data/item_data_scrapped_from_vinted.csv', index=False)
+
                 return True
             if dislike_button:
                 df.loc[item_index, 'status'] = 'rejected'
-                df.to_csv(file_path, index=False)
+                df.to_csv('../Assets/Data/item_data_scrapped_from_vinted.csv', index=False)
                 return True
 
             if add_button:
-                # Call the external Python script
-                subprocess.call(["python", "../Utilitaries/add_validated_items_to_raindrop.py"])
 
+                result = subprocess.run(['python', '../Utilitaries/add_validated_items_to_raindrop.py'], capture_output=True, text=True, check=True)
+                print('STDOUT:', result.stdout)
+                print('STDERR:', result.stderr)
+                time.sleep(5)
         return False
 
 
@@ -57,6 +67,7 @@ def app5():
 
     pending_items = df[df['status'] == 'pending']
 
+    print(st.session_state)
     if 'current_item_index' not in st.session_state:
         st.session_state.current_item_index = 0
 
@@ -64,13 +75,12 @@ def app5():
 
     if pending_item_indexes:
         current_item_index = pending_item_indexes[st.session_state.current_item_index]
+        print(current_item_index)
         if display_item(pending_items.loc[current_item_index], current_item_index):
             st.session_state.current_item_index += 1
             if st.session_state.current_item_index >= len(pending_item_indexes):
                 st.session_state.current_item_index = 0
 
-    else:
-        st.write("No pending items.")
 
     # Save the final DataFrame to the CSV file
     df.to_csv(file_path, index=False)

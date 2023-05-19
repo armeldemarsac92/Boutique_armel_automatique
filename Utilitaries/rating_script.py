@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 import requests
 import json
@@ -18,6 +20,7 @@ df = pd.read_csv(csv_file)
 
 # Load API key
 api_key = load_access_token_from_file()
+
 
 def extract_number(value):
     # check if value is a string
@@ -47,9 +50,18 @@ views_weight = 0.2
 likes_weight = 0.3
 price_weight = 0.5
 
+#final parameters
+brand_final_weight = 0.5
+item_final_weight = 0.5
+
 df['days_elapsed'] = df['item_date_added'].apply(lambda x: (datetime.datetime.now() - pd.to_datetime(x)).days)
 df['item_initial_followers2'] = df['item_initial_followers'].apply(extract_number)
 df['item_current_followers2'] = df['item_current_followers'].apply(extract_number)
+df['item_current_followers2'].fillna(df['item_initial_followers2'], inplace=True)  # Fill empty values with initial followers
+
+df['item_current_views'].fillna(df['item_initial_views'], inplace=True)  # Fill empty values with initial views
+
+
 df['item_price2'] = df['item_price'].apply(extract_number)
 print(df['item_price'])
 print(df['item_price2'])
@@ -80,6 +92,12 @@ df['item_price_normalized'] = 1 - ((df['item_price2'] - min_price) / (max_price 
 df['item_final_rating'] = rating_weight * df['item_rating_normalized'] + price_weight * df['item_price_normalized']
 print(df['item_final_rating'])
 
+# Calculate median price for each brand
+brand_low_price_index = df.groupby('item_brand')['item_price2'].quantile(0.30)
+
+# Create a new column 'brand_median_price' in the dataframe
+df['brand_low_price_index'] = df['item_brand'].map(brand_low_price_index)
+
 # Calculate brand popularity
 brand_popularity = df.groupby('item_brand').agg({
     'item_initial_views': 'mean',
@@ -103,6 +121,7 @@ print(brand_popularity['popularity_score'])
 if 'popularity_score' in df.columns:
     # Map the 'popularity_score' values from brand_popularity based on 'item_brand' values
     df['popularity_score'] = df['item_brand'].map(brand_popularity['popularity_score'])
+    df['brand_price'] = df['item_brand'].map(brand_popularity['median_price'])
 else:
     # Merge brand_popularity DataFrame back to the original DataFrame
     df = df.merge(brand_popularity['popularity_score'], left_on='item_brand', right_index=True)
@@ -110,15 +129,15 @@ else:
 print(df['popularity_score'])
 
 # Adjust the final item rating based on brand popularity
-df['item_final_rating'] = 0.5 * df['item_final_rating'] + 0.5 * df['popularity_score']
+df['item_final_rating'] = item_final_weight * df['item_final_rating'] + brand_final_weight * df['popularity_score']
 
 # Normalize the 'item_final_rating' column to have values between 0 and 1
 df['item_final_rating'] = (df['item_final_rating'] - df['item_final_rating'].min()) / (df['item_final_rating'].max() - df['item_final_rating'].min())
 
 # Calculate quartiles
 calc1 = df['item_final_rating'].quantile(q=0.25, interpolation='linear')
-calc2 = df['item_final_rating'].quantile(q=0.5, interpolation='linear')
-calc3 = df['item_final_rating'].quantile(q=0.75, interpolation='linear')
+calc2 = df['item_final_rating'].quantile(q=0.70, interpolation='linear')
+calc3 = df['item_final_rating'].quantile(q=0.90, interpolation='linear')
 print(calc1)
 print(calc2)
 print(calc3)
@@ -135,3 +154,50 @@ except:
 
 # Save the updated DataFrame back to the CSV file
 df.to_csv('../Assets/Data/item_data_scrapped_from_vinted.csv', index=False)
+# Iterate through items with "available" status
+for index, row in df.iterrows():
+    if row['status'] == 'available':
+        # Get raindrop item's tags
+        raindrop_id = int(row['raindrop_id'])
+        headers = {'Authorization': api_key}
+        response = requests.get(f'https://api.raindrop.io/rest/v1/raindrop/{raindrop_id}', headers=headers)
+
+        if response.status_code == 200:
+            try:
+                response_data = response.json()
+                if response_data['result']:
+                    item_data = response_data['item']
+                    tags = item_data['tags']
+
+
+                    tags = [tag for tag in tags if 'Tendance :' not in tag]
+
+                    if row['item_price2']<row['brand_low_price_index']:
+                        tags.append('Tendance : bonne affaire \U0001F929')
+                    if row['item_final_rating'] > calc3:
+                        tags.append('Tendance : article star \u2B50')
+                    if calc3 > row['item_final_rating'] > calc2:
+                        tags.append('Tendance : à surveiller \U0001F440')
+
+                    print(tags)
+
+                    # Prepare the data for the API request
+                    data_for_request = {
+                        'tags': tags,
+                    }
+
+                    # Make the API request to create a new Raindrop
+                    response = requests.put(f'https://api.raindrop.io/rest/v1/raindrop/{raindrop_id}', headers=headers, json=data_for_request)
+
+                    if response.status_code == 200:
+                        print(f"Tags updated for item with raindrop ID: {raindrop_id}")
+                        time.sleep(1)
+                    else:
+                        print(f"Failed to update tags for item with raindrop ID: {raindrop_id}")
+                        print(response.json())
+                else:
+                    print(f"Raindrop item not found with ID: {raindrop_id}")
+            except json.decoder.JSONDecodeError as err:
+                print(f"Error decoding JSON response: {err}")
+        else:
+            print(f"Failed to fetch raindrop item with ID: {raindrop_id}")

@@ -19,19 +19,22 @@ with open('../Assets/Data/mail_credentials.json') as f:
 df = pd.read_csv('../Assets/Data/item_data_scrapped_from_vinted.csv')
 todays_date = date.today().strftime("%d/%m/%Y")
 
-filtered_df_added = df[(df['date_scrapped'] == todays_date)]
-filtered_df_sold = df[(df['item_date_sold'] == todays_date)]
+
+filtered_df_added = df[(df['date_scrapped'] == todays_date) & (df['item_size'].notnull())]
+filtered_df_sold = df[(df['item_date_sold'] == todays_date) & (df['item_size'].notnull())]
 
 added_sizes_stats = {}
 sold_sizes_stats = {}
 
+
+
 sizes = [
-    'XS',
-    'S',
-    'M',
-    'L',
-    'XL',
-    'XXL'
+    'XS\n',
+    'S\n',
+    'M\n',
+    'L\n',
+    'XL\n',
+    'XXL\n'
 ]
 
 for size in sizes:
