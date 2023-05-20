@@ -1,10 +1,9 @@
 import time
-
 import pandas as pd
 import requests
 import json
 import datetime
-import numpy as np
+
 
 # Function to load access token from file
 def load_access_token_from_file(file_name="../Assets/Data/credentials.json"):
@@ -21,12 +20,14 @@ df = pd.read_csv(csv_file)
 # Load API key
 api_key = load_access_token_from_file()
 
-
 def extract_number(value):
     # check if value is a string
     if isinstance(value, str):
         # remove non-numeric characters
         value = value.replace('€', '').replace(',00', '')
+
+        # replace comma with dot as decimal separator
+        value = value.replace(',', '.')
 
         # get the first part before the space (assuming the number is always the first part)
         number = value.split()[0]
@@ -70,6 +71,7 @@ print(df['item_current_followers2'])
 df['gained_views'] = df['item_current_views'] - df['item_initial_views']
 df['gained_likes'] = df['item_current_followers2'] - df['item_initial_followers2']
 df['trend_coefficient'] = 1 + (df['gained_likes']/df['gained_views'])* trend_weight
+df['trend_coefficient'].fillna(1, inplace=True)
 df['view_score'] = (df['item_current_views']/df['days_elapsed'])*view_score_weight
 df['like_score'] = (df['item_current_followers2']/df['days_elapsed'])*like_score_weight
 df['item_rating'] = (df['view_score'] + df['like_score'])*df['trend_coefficient']
@@ -146,11 +148,6 @@ print(df.columns)
 columns_to_drop = ['item_rating', 'popularity_score', 'item_rating_normalized',
        'item_price_normalized', 'item_initial_followers2',
        'item_current_followers2', 'item_price2']
-try :
-    pass
-
-except:
-    pass
 
 # Save the updated DataFrame back to the CSV file
 df.to_csv('../Assets/Data/item_data_scrapped_from_vinted.csv', index=False)

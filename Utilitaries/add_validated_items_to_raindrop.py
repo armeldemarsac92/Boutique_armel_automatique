@@ -3,11 +3,16 @@ import json
 import time
 import requests
 import ast
+import pandas as pd
+
 def extract_number(value):
     # check if value is a string
     if isinstance(value, str):
         # remove non-numeric characters
         value = value.replace('€', '').replace(',00', '')
+
+        # replace comma with dot as decimal separator
+        value = value.replace(',', '.')
 
         # get the first part before the space (assuming the number is always the first part)
         number = value.split()[0]

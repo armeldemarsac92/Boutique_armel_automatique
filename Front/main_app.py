@@ -1,13 +1,13 @@
+# main.py
 import streamlit as st
 from defines_sizes_quotas import app3
 from set_vinted_scraping_parameters import app1
 from set_vinted_scraping_parameters_per_collection import app2
 from compare_quantities import app4
 from review_app import app5
+from stat_page import app6
 
 def main():
-    st.set_page_config(page_title='Multi-Page App', layout='wide')
-
     st.sidebar.title("Navigation")
     app_options = [
         "Sélectionnez une fonctionnalité",
@@ -15,8 +15,8 @@ def main():
         "Réglages de catégories",
         "Réglages de tailles",
         "Restocker",
-        "Review"
-        # ... add other apps as needed
+        "Review",
+        "Stats"
     ]
     choice = st.sidebar.selectbox("Choose an app", app_options)
 
@@ -30,7 +30,8 @@ def main():
         app4()
     elif choice == "Review":
         app5()
-    # ... add other app options as needed
+    elif choice == "Stats":
+        app6()
 
 if __name__ == "__main__":
     main()

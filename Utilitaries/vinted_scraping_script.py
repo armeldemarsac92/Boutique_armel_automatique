@@ -50,7 +50,7 @@ try:
     element = wait.until(EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler')))
     element.click()
 except TimeoutException:
-    print("Pas de cookie notice")
+    #print("Pas de cookie notice")
     pass
 
 
@@ -58,7 +58,7 @@ except TimeoutException:
 time.sleep(5)
 
 # Load existing item data from CSV file to a DataFrame
-file_path = '../Assets/Data/test_data.csv'
+file_path = '../Assets/Data/item_data_scrapped_from_vinted.csv'
 existing_data = pd.read_csv(file_path)
 
 # Defines the data list and loads every item's individual link on the Vinted search page
@@ -70,8 +70,9 @@ if len(items)<pieces_a_chercher:
 # Starts the scrapping process
 while i < pieces_a_chercher:
 
+
     if len((items)) == 0 :
-        print("Plus d'article disponible.")
+
         break
 
     # For every item's link located on the search result page...
@@ -79,7 +80,7 @@ while i < pieces_a_chercher:
 
         # breaks the while loop above if the number of items 'i' meets the specified number of items 'pieces_a_rechercher'
         if i >= pieces_a_chercher:
-            print(f"{i} pièces ont été collectées, fin du processus.")
+
             break
         # Open said link in a new tab
         try:
@@ -204,6 +205,7 @@ df = pd.DataFrame(data)
 # Append the dataframe to an existing CSV file or create a new file if it doesn't exist
 file_path = '../Assets/Data/item_data_scrapped_from_vinted.csv'
 df.to_csv(file_path, mode='a', header=False, index=False)
+print(f"{i} pieces ont ete collectees.")
 
 # Close the webdriver
 driver.quit()

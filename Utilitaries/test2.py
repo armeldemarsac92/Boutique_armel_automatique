@@ -31,7 +31,6 @@ def app4():
         return tailles_inferieures
 
     df = pd.read_csv('../Assets/Data/item_data_scrapped_from_vinted.csv')
-    df = df[df['status'] != 'pending']
 
     # Assume you've loaded your dataframe into the variable `df`
     # Replace 'status' and 'item_brand' with the appropriate column names in your CSV
@@ -143,13 +142,11 @@ def app4():
                 brand_ids = ast.literal_eval(parameters['brand_ids'])
                 for brand_id in brand_ids:
 
-                    brand_upper = brand_catalog(brand_id).upper()
-                    print(brand_upper)
-                    if brand_upper in grouped.index:
-                        ratio = grouped.loc[brand_upper, 'ratio']
+                    if brand_catalog(brand_id) in grouped.index:
+                        ratio = grouped.loc[brand_catalog(brand_id), 'ratio']
                         print(ratio)
                     else:
-                        ratio = 0.7
+                        ratio = 1
 
                     print(f"current dict : {ecart[category][size]}")
 
@@ -229,6 +226,12 @@ def app4():
 
                         print(f"Collected {collected_pieces_count} pieces.")
 
+                        if collected_pieces_count == pieces_a_chercher:
+
+                            # The script_b.py execution has completed
+                            status_placeholder_2.success(
+                                f"La recherche des {pieces_a_chercher} {category} de la marque {brand_catalog(brand_id)} en {size} est terminée")
+
                         if 0 < collected_pieces_count < pieces_a_chercher:
                             # The script_b.py execution has completed
                             status_placeholder_2.warning(
@@ -236,16 +239,11 @@ def app4():
                             # Adjust expected_quantity
                             ecart[category][size] = (pieces_a_chercher - collected_pieces_count)
                             # Update cloth_data with the new expected quantity
-                        if collected_pieces_count == 0 :
+                        else :
                             status_placeholder_2.error(
                                 f"La recherche de {pieces_a_chercher} {category} pour la marque {brand_catalog(brand_id)} en {size} n'a pas abouti. Aucun article disponible sur Vinted.")
                             # Adjust expected_quantity
                             ecart[category][size] = (pieces_a_chercher - collected_pieces_count)
-                        else :
-                            # The script_b.py execution has completed
-                            status_placeholder_2.success(
-                                f"La recherche des {pieces_a_chercher} {category} de la marque {brand_catalog(brand_id)} en {size} est terminée")
-
 
                         # updates the progress of the collection fetching
                         i += 1

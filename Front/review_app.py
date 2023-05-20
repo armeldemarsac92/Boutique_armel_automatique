@@ -1,22 +1,15 @@
-import time
-import pandas
-import pandas as pd
-
-df = pd.read_csv('../Assets/Data/item_data_scrapped_from_vinted.csv')
-
-
 def app5():
     import streamlit as st
     import pandas as pd
     import json
-    import subprocess
 
-    def display_item(item, item_index):
-        st.write(f"Item title: {item['item_title']}")
-
+    def display_item(df, item_index):
+        csv_row_number = item_index + 2  # Adjust for 0-based indexing and header row
+        st.write(f"CSV row number: {csv_row_number}")
+        st.write(f"Item title: {df.loc[item_index, 'item_title']}")
 
         # Parse the list of image URLs from the 'item_picture' column
-        image_urls = json.loads(item['item_picture'].replace("'", "\""))
+        image_urls = json.loads(df.loc[item_index, 'item_picture'].replace("'", "\""))
 
         # Remove duplicate image URLs
         unique_image_urls = list(set(image_urls))
@@ -30,44 +23,40 @@ def app5():
             for col in range(max_columns):
                 index = row * max_columns + col
                 if index < len(unique_image_urls):
-                    cols[col].write(f'<img src="{unique_image_urls[index]}" style="width: 100%; height: auto; object-fit: contain;">', unsafe_allow_html=True)
-        st.write(f"Item price: {item['item_price']}")
+                    cols[col].write(
+                        f'<img src="{unique_image_urls[index]}" style="width: 100%; height: auto; object-fit: contain;">',
+                        unsafe_allow_html=True)
+        st.write(f"Item price: {df.loc[item_index, 'item_price']}")
 
-        with st.form("item_actions"):
-            like_button = st.form_submit_button(f"Like {item['item_title']}")
-            dislike_button = st.form_submit_button(f"Dislike {item['item_title']}")
-            add_button = st.form_submit_button("Add Items")
+        like_button = st.button(f"Like {df.loc[item_index, 'item_title']}")
+        dislike_button = st.button(f"Dislike {df.loc[item_index, 'item_title']}")
 
-            if like_button:
-                df.loc[item_index, 'status'] = 'validated'
-                df.to_csv('../Assets/Data/item_data_scrapped_from_vinted.csv', index=False)
+        if like_button:
+            df.loc[item_index, 'status'] = 'validated'
 
-                return True
-            if dislike_button:
-                df.loc[item_index, 'status'] = 'rejected'
-                df.to_csv('../Assets/Data/item_data_scrapped_from_vinted.csv', index=False)
-                return True
 
-            if add_button:
+        if dislike_button:
+            df.loc[item_index, 'status'] = 'rejected'
 
-                result = subprocess.run(['python', '../Utilitaries/add_validated_items_to_raindrop.py'], capture_output=True, text=True, check=True)
-                print('STDOUT:', result.stdout)
-                print('STDERR:', result.stderr)
-                time.sleep(5)
+
         return False
-
 
     st.title('Review Items')
 
     # Replace 'your_file_path.csv' with the actual file path of your CSV file
-    file_path = '../Assets/Data/item_data_scrapped_from_vinted2.csv'
+    file_path = '../Assets/Data/item_data_scrapped_from_vinted.csv'
 
     # Load the existing CSV file or create a new DataFrame
     df = pd.read_csv(file_path)
 
     pending_items = df[df['status'] == 'pending']
+    validated_items = df[df['status'] == 'validated']
+    rejected_items = df[df['status'] == 'rejected']
 
-    print(st.session_state)
+    st.write(f"Pending items: {len(pending_items)}")
+    st.write(f"Validated items: {len(validated_items)}")
+    st.write(f"Rejected items: {len(rejected_items)}")
+
     if 'current_item_index' not in st.session_state:
         st.session_state.current_item_index = 0
 
@@ -75,12 +64,10 @@ def app5():
 
     if pending_item_indexes:
         current_item_index = pending_item_indexes[st.session_state.current_item_index]
-        print(current_item_index)
-        if display_item(pending_items.loc[current_item_index], current_item_index):
+        if display_item(df, current_item_index):
             st.session_state.current_item_index += 1
             if st.session_state.current_item_index >= len(pending_item_indexes):
                 st.session_state.current_item_index = 0
 
-
-    # Save the final DataFrame to the CSV file
-    df.to_csv(file_path, index=False)
+        # Save the DataFrame after every interaction
+        df.to_csv(file_path, index=False)
